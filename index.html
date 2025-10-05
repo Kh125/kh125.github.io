@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>kh125's Static Apps Portfolio</title>
+     <!-- Load Tailwind CSS -->
+     <script src="https://cdn.tailwindcss.com"></script>
+     <!-- Load Lucide Icons (for simple, clean icons) -->
+     <script type="module" src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+     <style>
+          /* Configure a custom font and dark mode background */
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+          body {
+               font-family: 'Inter', sans-serif;
+               background-color: #0d1117; /* Dark background color (similar to GitHub dark) */
+               color: #c9d1d9; /* Light text color */
+               min-height: 100vh;
+          }
+          /* Custom scrollbar for a sleek look */
+          ::-webkit-scrollbar { width: 8px; }
+          ::-webkit-scrollbar-track { background: #0d1117; }
+          ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+          ::-webkit-scrollbar-thumb:hover { background: #444c56; }
+
+          /* Icon setup via Lucide */
+          .icon {
+               width: 20px;
+               height: 20px;
+               margin-right: 8px;
+          }
+     </style>
+</head>
+<body class="antialiased">
+
+     <div class="max-w-6xl mx-auto p-4 sm:p-8">
+
+          <!-- Header / Hero Section -->
+          <header class="text-center py-16 sm:py-24 border-b border-gray-700 mb-12">
+               <h1 class="text-6xl sm:text-7xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-sky-300 mb-4">
+                    kh125.github.io
+               </h1>
+               <p class="text-xl sm:text-2xl text-gray-400 max-w-2xl mx-auto">
+                    A collection of modern, static web applications and experiments built with simple technologies.
+               </p>
+          </header>
+
+          <!-- Application Cards Grid -->
+          <section id="app-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+               <!-- App Card Component (Content loaded dynamically from apps array) -->
+               <div class="col-span-full text-center py-12 text-gray-500">Loading applications...</div>
+          </section>
+
+          <!-- Footer -->
+          <footer class="text-center pt-16 pb-8 text-gray-500 text-sm">
+               <p>&copy; 2024 kh125. All Rights Reserved. | Hosted via GitHub Pages.</p>
+          </footer>
+     </div>
+
+     <script>
+          const apps = [
+               {
+                    name: "Real-Time Todo List",
+                    description: "A collaborative todo list application using React and Firebase Firestore for real-time synchronization across users.",
+                    demoUrl: "https://kh125.github.io/todo-app/",
+                    repoUrl: "https://github.com/kh125/todo-app",
+                    icon: "list-todo"
+               },
+               {
+                    name: "Markdown Previewer",
+                    description: "A simple, fast, and local Markdown editor that instantly previews rendered HTML content as you type.",
+                    demoUrl: "https://kh125.github.io/markdown-previewer/",
+                    repoUrl: "https://github.com/kh125/markdown-previewer",
+                    icon: "code"
+               },
+               {
+                    name: "Interactive Clock Display",
+                    description: "A beautiful and minimalist digital and analog clock display built with vanilla JavaScript and CSS animations.",
+                    demoUrl: "https://kh125.github.io/clock-display/",
+                    repoUrl: "https://github.com/kh125/clock-display",
+                    icon: "clock"
+               },
+               {
+                    name: "Responsive Gallery",
+                    description: "An adaptive image gallery template optimized for performance and fluid scaling on all mobile and desktop devices.",
+                    demoUrl: "https://kh125.github.io/responsive-gallery/",
+                    repoUrl: "https://github.com/kh125/responsive-gallery",
+                    icon: "layout-grid"
+               },
+               {
+                    name: "BMI Calculator",
+                    description: "A quick health tool to calculate Body Mass Index, featuring a clean form and instant, responsive feedback.",
+                    demoUrl: "https://kh125.github.io/bmi-calculator/",
+                    repoUrl: "https://github.com/kh125/bmi-calculator",
+                    icon: "scale"
+               },
+               {
+                    name: "3D Solar System Viewer",
+                    description: "A simple visualization of the solar system orbits built using Three.js, focusing on smooth camera controls.",
+                    demoUrl: "https://kh125.github.io/3d-solar-system/",
+                    repoUrl: "https://github.com/kh125/3d-solar-system",
+                    icon: "globe"
+               }
+          ];
+
+          // Function to render application cards
+          function renderAppCards(apps) {
+               const appList = document.getElementById('app-list');
+               appList.innerHTML = ''; // Clear existing content
+
+               if (!apps || apps.length === 0) {
+                    appList.innerHTML = '<p class="col-span-full text-center text-gray-500 py-12">No applications found.</p>';
+                    // Initialize Lucide icons
+                    if (typeof lucide !== 'undefined') {
+                         lucide.createIcons();
+                    }
+                    return;
+               }
+
+               apps.forEach(app => {
+                    const card = document.createElement('div');
+                    // Card styling: Dark gray background, rounded, padding, border, subtle shadow, and hover effect
+                    card.className = "bg-[#161b22] p-6 rounded-xl border border-gray-700 shadow-lg transform transition duration-300 hover:scale-[1.02] hover:shadow-2xl";
+
+                    card.innerHTML = `
+                         <div class="flex items-center mb-4">
+                         <!-- Icon placeholder from Lucide - the inner SVG will be rendered by the Lucide script -->
+                         <i data-lucide="${app.icon}" class="icon text-indigo-400"></i>
+                         <h2 class="text-2xl font-semibold text-gray-200">${app.name}</h2>
+                         </div>
+                         <p class="text-gray-400 mb-6 text-sm min-h-[50px]">${app.description}</p>
+                         
+                         <!-- Action Buttons -->
+                         <div class="flex space-x-4">
+                         <a href="${app.demoUrl}" target="_blank" rel="noopener noreferrer" 
+                              class="flex-1 text-center py-2 px-4 rounded-lg font-medium text-white 
+                                   bg-indigo-600 hover:bg-indigo-500 transition duration-150 shadow-md shadow-indigo-500/50 
+                                   flex items-center justify-center text-sm sm:text-base">
+                              <i data-lucide="play" class="icon w-4 h-4 mr-2"></i>
+                              Live Demo
+                         </a>
+                         <a href="${app.repoUrl}" target="_blank" rel="noopener noreferrer" 
+                              class="flex-1 text-center py-2 px-4 rounded-lg font-medium text-indigo-400 
+                                   border border-gray-600 hover:bg-gray-800 transition duration-150
+                                   flex items-center justify-center text-sm sm:text-base">
+                              <i data-lucide="github" class="icon w-4 h-4 mr-2"></i>
+                              Source
+                         </a>
+                         </div>
+                    `;
+                    appList.appendChild(card);
+               });
+
+               if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+               }
+          }
+
+          renderAppCards(apps);
+     </script>
+</body>
+</html>
