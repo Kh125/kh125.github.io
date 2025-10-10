@@ -69,6 +69,15 @@
             color: white;
             border-color: #4f46e5;
         }
+        
+        /* History Modal Styles */
+        #history-modal summary {
+            cursor: pointer;
+            outline: none;
+        }
+        #history-modal details[open] summary {
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -95,7 +104,7 @@
             <!-- Full-width Countdown -->
             <div class="bg-[#161b22] rounded-xl p-8 ring-1 ring-white/10 text-center mb-8">
                 <h3 class="text-2xl font-medium text-sky-300">JLPT N4 Exam Countdown</h3>
-                <div id="countdown" class="text-8xl font-bold text-indigo-400 my-4"></div>
+                <div id="countdown" class="text-8xl font-bold text-indigo-400 my-4">...</div>
                 <p class="text-md text-slate-400">Until December 7, 2025</p>
             </div>
 
@@ -132,7 +141,7 @@
                                 <span id="kanji-count" class="text-xl font-bold w-12 text-center">0</span>
                                 <button id="kanji-plus" class="progress-control-btn">+</button>
                             </div>
-                            <span class="text-sm text-slate-400">30</span>
+                            <span class="text-sm text-slate-400">200</span>
                         </div>
                     </div>
                 </div>
@@ -180,12 +189,17 @@
 
             <!-- Weekly Review Section -->
             <section id="weekly-review" class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 mb-8">
-                <h2 class="text-2xl font-bold mb-4 text-center gradient-text">Weekly Review & Planning</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-center gradient-text">Weekly Review & Planning</h2>
+                    <button id="view-history-btn" class="bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center">
+                        <i data-lucide="history" class="w-4 h-4 mr-2"></i>View History
+                    </button>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Left Column: Wins -->
                     <div>
                         <h3 class="text-lg font-semibold mb-3 text-sky-300 flex items-center"><i data-lucide="award" class="icon text-sky-300"></i>Last Week's Wins</h3>
-                        <div class="bg-slate-800/50 p-4 rounded-lg space-y-4">
+                        <div class="bg-slate-800/50 p-4 rounded-lg space-y-4 min-h-[100px]">
                             <div>
                                 <h4 class="font-semibold mb-2">Developer Tasks</h4>
                                 <ul id="dev-wins-list" class="list-disc list-inside text-sm text-slate-300 space-y-1"><li>Nothing yet.</li></ul>
@@ -279,6 +293,20 @@
         </footer>
     </div>
 
+    <!-- Task History Modal -->
+    <div id="history-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-[#161b22] w-full max-w-2xl max-h-[90vh] rounded-xl ring-1 ring-white/10 flex flex-col">
+            <header class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold gradient-text">Completed Task History</h2>
+                <button id="close-history-btn" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+            </header>
+            <div id="history-content" class="p-6 overflow-y-auto space-y-4">
+                <!-- History content will be generated here -->
+            </div>
+        </div>
+    </div>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
@@ -296,7 +324,6 @@
             const kanjiPlusBtn = document.getElementById('kanji-plus');
             const kanjiMinusBtn = document.getElementById('kanji-minus');
 
-            // Task Board Elements
             const addDevTaskForm = document.getElementById('add-dev-task-form');
             const newDevTaskInput = document.getElementById('new-dev-task-input');
             const devColumns = { todo: document.getElementById('dev-todo-column'), inprogress: document.getElementById('dev-inprogress-column'), done: document.getElementById('dev-done-column') };
@@ -307,7 +334,6 @@
             const learningColumns = { todo: document.getElementById('learning-todo-column'), inprogress: document.getElementById('learning-inprogress-column'), done: document.getElementById('learning-done-column') };
             const learningTaskCounters = { todo: document.getElementById('learning-todo-count'), inprogress: document.getElementById('learning-inprogress-count'), done: document.getElementById('learning-done-count') };
             
-            // Daily Feature Elements
             const addFocusForm = document.getElementById('add-focus-form');
             const newFocusInput = document.getElementById('new-focus-input');
             const focusListEl = document.getElementById('focus-list');
@@ -318,13 +344,17 @@
             const streakCountEl = document.getElementById('streak-count');
             const lastStreakDateEl = document.getElementById('last-streak-date');
             
-            // Weekly Review Elements
             const devWinsListEl = document.getElementById('dev-wins-list');
             const learningWinsListEl = document.getElementById('learning-wins-list');
             const addWeeklyGoalForm = document.getElementById('add-weekly-goal-form');
             const newWeeklyGoalInput = document.getElementById('new-weekly-goal-input');
             const weeklyGoalsListEl = document.getElementById('weekly-goals-list');
             const archiveTasksBtn = document.getElementById('archive-tasks-btn');
+
+            const historyModal = document.getElementById('history-modal');
+            const viewHistoryBtn = document.getElementById('view-history-btn');
+            const closeHistoryBtn = document.getElementById('close-history-btn');
+            const historyContentEl = document.getElementById('history-content');
 
 
             // --- Data & State ---
@@ -354,7 +384,6 @@
                 const savedData = localStorage.getItem(STORAGE_KEY);
                 if (savedData) {
                     data = JSON.parse(savedData);
-                    // Ensure all new data structures exist to prevent errors
                     if (!data.devTasks) data.devTasks = [];
                     if (!data.learningTasks) data.learningTasks = [];
                     if (data.kanjiLearned === undefined) data.kanjiLearned = 0;
@@ -375,22 +404,20 @@
                 countdownEl.textContent = `${diffDays} days`;
             };
 
-            // --- Progress Bars ---
             const updateLessonProgressBar = () => {
-                if(!progressBarEl) return;
+                if(!progressBarEl || !lessonCountEl) return;
                 const percentage = ((data.currentLesson - 1) / 49) * 100;
                 progressBarEl.style.width = `${percentage}%`;
                 lessonCountEl.textContent = data.currentLesson;
             };
 
             const updateKanjiProgressBar = () => {
-                if(!kanjiProgressBarEl) return;
-                const percentage = (data.kanjiLearned / 30) * 100;
+                if(!kanjiProgressBarEl || !kanjiCountEl) return;
+                const percentage = (data.kanjiLearned / 200) * 100;
                 kanjiProgressBarEl.style.width = `${percentage}%`;
                 kanjiCountEl.textContent = data.kanjiLearned;
             };
 
-            // --- Today's Focus ---
             const renderFocusList = () => {
                 if (!focusListEl) return;
                 focusListEl.innerHTML = data.todayFocus.length === 0 
@@ -424,7 +451,6 @@
                 }
             };
 
-            // --- Study Streak ---
             const updateStudyStreak = () => {
                 const today = getTodayDateString();
                 if (data.studyStreak.lastUpdate === today) return;
@@ -459,7 +485,6 @@
                 lastStreakDateEl.textContent = data.studyStreak.lastUpdate ? `Last activity: ${data.studyStreak.lastUpdate}` : 'No activity yet.';
             };
 
-            // --- Pomodoro Timer ---
             const playSound = () => {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
@@ -471,13 +496,14 @@
             };
 
             const updatePomoDisplay = () => {
+                if (!pomodoroTimerEl) return;
                 const minutes = Math.floor(pomoState.timeRemaining / 60);
                 const seconds = pomoState.timeRemaining % 60;
                 pomodoroTimerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             };
 
             const startPomoTimer = () => {
-                if (pomoState.isRunning) return;
+                if (pomoState.isRunning || !pomoStartPauseBtn) return;
                 pomoState.isRunning = true;
                 pomoStartPauseBtn.textContent = 'Pause';
                 pomoState.timerId = setInterval(() => {
@@ -496,7 +522,7 @@
             const pausePomoTimer = () => {
                 clearInterval(pomoState.timerId);
                 pomoState.isRunning = false;
-                pomoStartPauseBtn.textContent = 'Start';
+                if(pomoStartPauseBtn) pomoStartPauseBtn.textContent = 'Start';
             };
             
             const switchPomoMode = (mode) => {
@@ -507,8 +533,7 @@
                 pomoModeButtons[mode].classList.add('active');
                 updatePomoDisplay();
             };
-
-            // --- Weekly Review ---
+            
             const renderWeeklyReview = () => {
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -548,7 +573,7 @@
                     });
                 });
             };
-            
+
             const handleArchiveTasks = () => {
                 const completedDev = data.devTasks.filter(t => t.status === 'done');
                 const completedLearning = data.learningTasks.filter(t => t.status === 'done');
@@ -564,14 +589,66 @@
                 renderWeeklyReview();
             };
 
+            const openHistoryModal = () => {
+                renderHistory();
+                historyModal.classList.remove('hidden');
+            };
 
-            // --- Task Boards (Generic Logic) ---
+            const closeHistoryModal = () => {
+                historyModal.classList.add('hidden');
+            };
+
+            const renderHistory = () => {
+                const allDoneTasks = [
+                    ...data.tasksArchive,
+                    ...data.devTasks.filter(t => t.status === 'done'),
+                    ...data.learningTasks.filter(t => t.status === 'done')
+                ];
+
+                const uniqueTasks = Array.from(new Map(allDoneTasks.map(task => [task.id, task])).values());
+
+                const tasksByDay = uniqueTasks.reduce((acc, task) => {
+                    if(!task.completedDate) return acc;
+                    const date = new Date(task.completedDate).toISOString().split('T')[0];
+                    if (!acc[date]) {
+                        acc[date] = [];
+                    }
+                    acc[date].push(task);
+                    return acc;
+                }, {});
+
+                const sortedDays = Object.keys(tasksByDay).sort((a, b) => new Date(b) - new Date(a));
+
+                if (sortedDays.length === 0) {
+                    historyContentEl.innerHTML = '<p class="text-slate-500 text-center">No completed tasks yet.</p>';
+                    return;
+                }
+
+                historyContentEl.innerHTML = sortedDays.map(day => {
+                    const date = new Date(day);
+                     const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const tasksHtml = tasksByDay[day].map(task => {
+                        const typeLabel = task.type === 'dev' 
+                            ? '<span class="text-xs font-semibold bg-sky-500/50 text-sky-200 px-2 py-0.5 rounded-full ml-2">Dev</span>' 
+                            : '<span class="text-xs font-semibold bg-indigo-500/50 text-indigo-200 px-2 py-0.5 rounded-full ml-2">Learn</span>';
+                        return `<li class="text-slate-300">${task.text} ${typeLabel}</li>`;
+                    }).join('');
+
+                    return `
+                        <details class="bg-slate-800/50 p-3 rounded-lg" open>
+                            <summary class="font-semibold text-lg text-slate-200">${formattedDate}</summary>
+                            <ul class="mt-2 pl-4 space-y-1 list-disc list-inside">${tasksHtml}</ul>
+                        </details>
+                    `;
+                }).join('');
+            };
+
             const createTaskElement = (task, type) => {
                 const taskEl = document.createElement('div');
                 taskEl.className = 'task bg-slate-700 p-3 rounded-lg shadow';
                 taskEl.draggable = true;
                 taskEl.dataset.id = task.id;
-                taskEl.innerHTML = `<button class="float-right text-slate-400 hover:text-red-400 font-bold -mt-1">×</button><p>${task.text}</p>`;
+                taskEl.innerHTML = `<button class="float-right text-slate-400 hover:text-red-400 font-bold -mt-1 text-lg">&times;</button><p>${task.text}</p>`;
                 taskEl.querySelector('button').onclick = () => deleteTask(task.id, type);
                 taskEl.addEventListener('dragstart', (e) => {
                     e.target.classList.add('dragging');
@@ -594,10 +671,8 @@
                 if(!columns.todo) return;
                 Object.values(columns).forEach(col => col.innerHTML = '');
                 taskList.forEach(task => {
-                    if (task.status !== 'done' || !task.completedDate) {
-                       const taskEl = createTaskElement(task, type);
-                       columns[task.status].appendChild(taskEl);
-                    }
+                    const taskEl = createTaskElement(task, type);
+                    columns[task.status]?.appendChild(taskEl);
                 });
                 updateTaskCounts(type);
             };
@@ -608,6 +683,7 @@
                  if(!counters.todo) return;
                  counters.todo.textContent = tasks.filter(t => t.status === 'todo').length;
                  counters.inprogress.textContent = tasks.filter(t => t.status === 'inprogress').length;
+                 const doneTasks = tasks.filter(t => t.status === 'done').length + data.tasksArchive.filter(t => t.type === type).length;
                  counters.done.textContent = tasks.filter(t => t.status === 'done').length;
             };
 
@@ -624,7 +700,6 @@
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
             };
 
-            // --- Initialization ---
             const initDashboard = () => {
                 loadData();
 
@@ -637,7 +712,6 @@
                 calculateCountdown();
                 setInterval(calculateCountdown, 1000 * 60 * 60);
                 
-                // Render all components
                 updateLessonProgressBar();
                 updateKanjiProgressBar();
                 renderFocusList();
@@ -647,7 +721,6 @@
                 renderTasks('dev');
                 renderTasks('learning');
                 
-                // --- Event Listeners ---
                 lessonPlusBtn?.addEventListener('click', () => { if (data.currentLesson < 50) data.currentLesson++; updateLessonProgressBar(); saveData(); });
                 lessonMinusBtn?.addEventListener('click', () => { if (data.currentLesson > 1) data.currentLesson--; updateLessonProgressBar(); saveData(); });
                 kanjiPlusBtn?.addEventListener('click', () => { if (data.kanjiLearned < 200) data.kanjiLearned++; updateKanjiProgressBar(); saveData(); });
@@ -656,9 +729,10 @@
                 addFocusForm?.addEventListener('submit', handleAddFocus);
                 pomoStartPauseBtn?.addEventListener('click', () => pomoState.isRunning ? pausePomoTimer() : startPomoTimer());
                 pomoResetBtn?.addEventListener('click', () => switchPomoMode(pomoState.mode));
-                pomoModeButtons.pomodoro?.addEventListener('click', () => switchPomoMode('pomodoro'));
-                pomoModeButtons.short?.addEventListener('click', () => switchPomoMode('short'));
-                pomoModeButtons.long?.addEventListener('click', () => switchPomoMode('long'));
+                Object.values(pomoModeButtons).forEach((btn, index) => {
+                    const mode = Object.keys(pomoModeButtons)[index];
+                    btn?.addEventListener('click', () => switchPomoMode(mode));
+                });
 
                 addWeeklyGoalForm?.addEventListener('submit', (e) => {
                     e.preventDefault();
@@ -672,8 +746,14 @@
                 });
                 archiveTasksBtn?.addEventListener('click', handleArchiveTasks);
 
-                addDevTaskForm?.addEventListener('submit', (e) => { e.preventDefault(); const text = newDevTaskInput.value.trim(); if (text) { data.devTasks.push({ id: `dev-${Date.now()}`, text, status: 'todo' }); newDevTaskInput.value = ''; saveData(); renderTasks('dev'); } });
-                addLearningTaskForm?.addEventListener('submit', (e) => { e.preventDefault(); const text = newLearningTaskInput.value.trim(); if (text) { data.learningTasks.push({ id: `learning-${Date.now()}`, text, status: 'todo' }); newLearningTaskInput.value = ''; saveData(); renderTasks('learning'); } });
+                viewHistoryBtn?.addEventListener('click', openHistoryModal);
+                closeHistoryBtn?.addEventListener('click', closeHistoryModal);
+                historyModal?.addEventListener('click', (e) => {
+                    if (e.target === historyModal) closeHistoryModal();
+                });
+
+                addDevTaskForm?.addEventListener('submit', (e) => { e.preventDefault(); const text = newDevTaskInput.value.trim(); if (text) { data.devTasks.push({ id: `dev-${Date.now()}`, text, status: 'todo', type: 'dev' }); newDevTaskInput.value = ''; saveData(); renderTasks('dev'); } });
+                addLearningTaskForm?.addEventListener('submit', (e) => { e.preventDefault(); const text = newLearningTaskInput.value.trim(); if (text) { data.learningTasks.push({ id: `learning-${Date.now()}`, text, status: 'todo', type: 'learning' }); newLearningTaskInput.value = ''; saveData(); renderTasks('learning'); } });
 
                 const setupDragAndDrop = (type) => {
                     const columns = type === 'dev' ? devColumns : learningColumns;
@@ -683,10 +763,12 @@
                             e.preventDefault();
                              const afterElement = getDragAfterElement(column, e.clientY);
                              const dragging = document.querySelector('.dragging');
-                             if (afterElement == null) {
-                                 column.appendChild(dragging);
-                             } else {
-                                 column.insertBefore(dragging, afterElement);
+                             if(dragging) {
+                                if (afterElement == null) {
+                                    column.appendChild(dragging);
+                                } else {
+                                    column.insertBefore(dragging, afterElement);
+                                }
                              }
                         });
                         column.addEventListener('drop', e => {
@@ -702,10 +784,10 @@
                                 if (status === 'done' && oldStatus !== 'done') {
                                     task.completedDate = new Date().toISOString();
                                     if (type === 'learning') updateStudyStreak();
-                                    renderWeeklyReview();
                                 }
                                 saveData();
                                 renderTasks(type);
+                                renderWeeklyReview();
                             }
                         });
                     });
@@ -746,11 +828,12 @@
                         </div>`;
                     appList.appendChild(card);
                 });
+                if (typeof lucide !== 'undefined') { lucide.createIcons(); }
             }
 
             renderAppCards(apps);
-            if (typeof lucide !== 'undefined') { lucide.createIcons(); }
         });
     </script>
 </body>
 </html>
+
