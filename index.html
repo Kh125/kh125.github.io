@@ -129,7 +129,7 @@
                                     <span id="kanji-count" class="text-xl font-bold w-12 text-center">0</span>
                                     <button id="kanji-plus" class="progress-control-btn">+</button>
                                 </div>
-                                <span class="text-sm text-slate-400">200</span>
+                                <span class="text-sm text-slate-400">30</span>
                             </div>
                         </div>
                     </div>
@@ -320,7 +320,7 @@
             };
             const updateKanjiProgressBar = () => {
                 if(!kanjiProgressBarEl || !kanjiCountEl) return;
-                const percentage = (data.kanjiLearned / 200) * 100;
+                const percentage = (data.kanjiLearned / 30) * 100;
                 kanjiProgressBarEl.style.width = `${percentage}%`;
                 kanjiCountEl.textContent = data.kanjiLearned;
             };
@@ -552,7 +552,7 @@
                 // --- Event Listeners ---
                 lessonPlusBtn?.addEventListener('click', () => { if (data.currentLesson < 50) data.currentLesson++; updateLessonProgressBar(); saveData(); });
                 lessonMinusBtn?.addEventListener('click', () => { if (data.currentLesson > 1) data.currentLesson--; updateLessonProgressBar(); saveData(); });
-                kanjiPlusBtn?.addEventListener('click', () => { if (data.kanjiLearned < 200) data.kanjiLearned++; updateKanjiProgressBar(); saveData(); });
+                kanjiPlusBtn?.addEventListener('click', () => { if (data.kanjiLearned < 30) data.kanjiLearned++; updateKanjiProgressBar(); saveData(); });
                 kanjiMinusBtn?.addEventListener('click', () => { if (data.kanjiLearned > 0) data.kanjiLearned--; updateKanjiProgressBar(); saveData(); });
 
                 pomoStartPauseBtn?.addEventListener('click', () => pomoState.isRunning ? pausePomoTimer() : startPomoTimer());
