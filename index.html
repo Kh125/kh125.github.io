@@ -28,10 +28,13 @@
 
         /* Dashboard-specific styles */
         .kanban-column { min-height: 200px; }
-        .task { cursor: grab; touch-action: none; transition: background-color 0.2s, border-color 0.2s; border-left: 4px solid transparent; }
+        .task { cursor: grab; touch-action: none; transition: all 0.2s; border-left: 4px solid transparent; }
         .task:active { cursor: grabbing; }
         .task.dragging { opacity: 0.5; }
         .task.priority { border-left-color: #f59e0b; background-color: #1f2937; } /* amber-500 */
+        .task.done { opacity: 0.7; }
+        .task.done p { text-decoration: line-through; }
+
         .gradient-text {
             background: linear-gradient(to right, #4f46e5, #0ea5e9);
             -webkit-background-clip: text;
@@ -201,7 +204,7 @@
                         <h3 class="text-lg font-semibold mb-3 text-sky-300 flex items-center"><i data-lucide="award" class="icon text-sky-300"></i>Last Week's Wins</h3>
                         <ul id="wins-list" class="list-disc list-inside text-sm text-slate-300 space-y-1 mb-4"><li>Nothing yet.</li></ul>
                         <button id="archive-tasks-btn" class="w-full bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center">
-                            <i data-lucide="archive" class="w-4 h-4 mr-2"></i>Start New Week & Archive Completed
+                            <i data-lucide="archive" class="w-4 h-4 mr-2"></i>Clear Completed Tasks
                         </button>
                     </div>
                 </details>
@@ -454,8 +457,8 @@
             };
 
             const handleArchiveTasks = () => {
-                const completed = data.tasks.filter(t => t.status === 'done');
-                data.tasksArchive.push(...completed);
+                const completedToday = data.tasks.filter(t => t.status === 'done');
+                data.tasksArchive.push(...completedToday);
                 data.tasks = data.tasks.filter(t => t.status !== 'done');
                 saveData();
                 renderTasks();
@@ -535,11 +538,29 @@
                 renderTasks();
                 closeTaskModal();
             };
+            
+            // --- Auto-archiving logic ---
+            const archiveOldDoneTasks = () => {
+                const todayStr = getTodayDateString();
+                const tasksToArchive = data.tasks.filter(task => 
+                    task.status === 'done' && 
+                    task.completedDate && 
+                    task.completedDate.split('T')[0] < todayStr
+                );
+                
+                if (tasksToArchive.length > 0) {
+                    data.tasksArchive.push(...tasksToArchive);
+                    data.tasks = data.tasks.filter(task => !tasksToArchive.find(t => t.id === task.id));
+                    saveData();
+                }
+            };
+
 
             // --- Unified Task Board Logic ---
             const createTaskElement = (task) => {
                 const taskEl = document.createElement('div');
-                taskEl.className = `task bg-slate-700 p-3 rounded-lg shadow flex justify-between items-center ${task.priority ? 'priority' : ''}`;
+                const isDone = task.status === 'done';
+                taskEl.className = `task bg-slate-700 p-3 rounded-lg shadow flex justify-between items-center ${task.priority ? 'priority' : ''} ${isDone ? 'done' : ''}`;
                 taskEl.draggable = true;
                 taskEl.dataset.id = task.id;
 
@@ -620,6 +641,7 @@
 
             const initDashboard = () => {
                 loadData();
+                archiveOldDoneTasks(); // Run the new cleanup logic on load
                 calculateCountdown();
                 setInterval(calculateCountdown, 1000 * 60 * 60);
                 
@@ -664,9 +686,6 @@
                     
                     column.addEventListener('drop', e => {
                         e.preventDefault();
-                        // The dragged element is visually in the correct place due to the 'dragover' event.
-                        // Now, we update the underlying data array to match the DOM's new order.
-
                         const reorderedTasks = [];
                         const statusMap = {
                             'todo-column': 'todo',
@@ -674,13 +693,11 @@
                             'done-column': 'done'
                         };
 
-                        // Iterate over the columns in the DOM to get the new visual order
                         Object.entries(taskColumns).forEach(([statusKey, colEl]) => {
                             const tasksInColumn = colEl.querySelectorAll('.task');
                             tasksInColumn.forEach(taskEl => {
                                 const taskId = taskEl.dataset.id;
-                                // Find the original task object to avoid creating copies
-                                const task = data.tasks.find(t => t.id === taskId);
+                                const task = data.tasks.find(t => t.id === taskId) || data.tasksArchive.find(t => t.id === taskId);
                                 if (task) {
                                     const newStatus = statusMap[colEl.id];
                                     const oldStatus = task.status;
@@ -691,17 +708,27 @@
                                             task.completedDate = new Date().toISOString();
                                             if (task.type === 'learning') updateStudyStreak();
                                         } else if (newStatus !== 'done' && oldStatus === 'done') {
-                                            task.completedDate = null; // Task moved out of "Done"
+                                            task.completedDate = null; 
                                         }
                                     }
                                     reorderedTasks.push(task);
                                 }
                             });
                         });
+                        
+                        // Also include tasks that might be in the archive but were somehow dragged back
+                        data.tasksArchive.forEach(archivedTask => {
+                            if (!reorderedTasks.find(t => t.id === archivedTask.id)) {
+                                reorderedTasks.push(archivedTask);
+                            }
+                        });
 
-                        data.tasks = reorderedTasks;
+
+                        data.tasks = reorderedTasks.filter(t => t.status !== 'done' || (t.status === 'done' && t.completedDate.split('T')[0] === getTodayDateString()));
+                        data.tasksArchive = reorderedTasks.filter(t => t.status === 'done' && t.completedDate.split('T')[0] !== getTodayDateString());
+
                         saveData();
-                        renderTasks(); // Re-render to ensure consistency and apply any class changes
+                        renderTasks(); 
                         renderWeeklyReview();
                     });
                 });
