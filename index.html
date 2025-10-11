@@ -28,9 +28,10 @@
 
         /* Dashboard-specific styles */
         .kanban-column { min-height: 200px; }
-        .task { cursor: grab; touch-action: none; }
+        .task { cursor: grab; touch-action: none; transition: background-color 0.2s, border-color 0.2s; border-left: 4px solid transparent; }
         .task:active { cursor: grabbing; }
         .task.dragging { opacity: 0.5; }
+        .task.priority { border-left-color: #f59e0b; background-color: #1f2937; } /* amber-500 */
         .gradient-text {
             background: linear-gradient(to right, #4f46e5, #0ea5e9);
             -webkit-background-clip: text;
@@ -39,64 +40,28 @@
             text-fill-color: transparent;
         }
         .progress-control-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 9999px;
-            background-color: #374151; /* gray-700 */
-            color: white;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s;
+            width: 32px; height: 32px; border-radius: 9999px; background-color: #374151;
+            color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s;
         }
-        .progress-control-btn:hover {
-            background-color: #4b5563; /* gray-600 */
-        }
-        /* Style for completed items */
-        .completed p {
-            text-decoration: line-through;
-            color: #6b7280; /* gray-500 */
-        }
-        /* Pomodoro Timer button styles */
+        .progress-control-btn:hover { background-color: #4b5563; }
         .timer-mode-btn {
-            background-color: transparent;
-            border: 1px solid #4b5563; /* gray-600 */
-            color: #9ca3af; /* gray-400 */
+            background-color: transparent; border: 1px solid #4b5563; color: #9ca3af;
         }
-        .timer-mode-btn.active {
-            background-color: #4f46e5; /* indigo-600 */
-            color: white;
-            border-color: #4f46e5;
-        }
+        .timer-mode-btn.active { background-color: #4f46e5; color: white; border-color: #4f46e5; }
         
-        /* History Modal Styles */
-        #history-modal summary {
-            cursor: pointer;
-            outline: none;
-        }
-        #history-modal details[open] summary {
-            margin-bottom: 0.5rem;
-        }
+        #history-modal summary { cursor: pointer; outline: none; }
+        #history-modal details[open] summary { margin-bottom: 0.5rem; }
+        .task-actions { opacity: 0; transition: opacity 0.2s; }
+        .task:hover .task-actions { opacity: 1; }
     </style>
 </head>
 <body class="antialiased">
 
     <div class="max-w-7xl mx-auto p-4 sm:p-8">
 
-        <!-- Header / Hero Section -->
-        <header class="text-center py-16 sm:py-20 border-b border-gray-700 mb-12">
-            <h1 class="text-6xl sm:text-7xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-sky-300 mb-4">
-                kh125.github.io
-            </h1>
-            <p class="text-xl sm:text-2xl text-gray-400 max-w-2xl mx-auto">
-                A focused collection of static tools designed for Japanese language learners and JLPT preparation.
-            </p>
-        </header>
-
         <!-- Productivity Hub Section -->
         <section id="productivity-hub" class="mb-16">
-             <header class="mb-8 text-center">
+             <header class="mb-8 text-center pt-12">
                 <h2 class="text-4xl font-bold tracking-tight gradient-text">Personal Dashboard</h2>
                 <p class="text-slate-400 mt-1">Your private command center for development and language learning. Data is saved locally.</p>
             </header>
@@ -108,67 +73,57 @@
                 <p class="text-md text-slate-400">Until December 7, 2025</p>
             </div>
 
-            <!-- N4 Progress Card -->
-            <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 mb-8">
-                <h3 class="text-xl font-semibold mb-4 text-sky-300">🎌 N4 Progress</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Lesson Progress -->
-                    <div class="mb-6 md:mb-0">
-                        <label class="block text-lg font-medium mb-2">Lesson Progress</label>
-                        <div class="w-full bg-slate-700 rounded-full h-2.5 mb-3">
-                            <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-sky-500 h-2.5 rounded-full" style="width: 0%"></div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-slate-400">L1</span>
-                            <div class="flex items-center gap-3">
-                                <button id="lesson-minus" class="progress-control-btn">-</button>
-                                <span id="lesson-count" class="text-xl font-bold w-12 text-center">0</span>
-                                <button id="lesson-plus" class="progress-control-btn">+</button>
+            <!-- N4 Progress & Stats Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                 <!-- N4 Progress Card -->
+                <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10">
+                    <h3 class="text-xl font-semibold mb-4 text-sky-300">🎌 N4 Progress</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Lesson Progress -->
+                        <div>
+                            <label class="block text-lg font-medium mb-2">Lesson Progress</label>
+                            <div class="w-full bg-slate-700 rounded-full h-2.5 mb-3">
+                                <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-sky-500 h-2.5 rounded-full" style="width: 0%"></div>
                             </div>
-                            <span class="text-sm text-slate-400">L50</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-400">L1</span>
+                                <div class="flex items-center gap-3">
+                                    <button id="lesson-minus" class="progress-control-btn">-</button>
+                                    <span id="lesson-count" class="text-xl font-bold w-12 text-center">0</span>
+                                    <button id="lesson-plus" class="progress-control-btn">+</button>
+                                </div>
+                                <span class="text-sm text-slate-400">L50</span>
+                            </div>
+                        </div>
+                        <!-- Kanji Progress -->
+                        <div>
+                            <label class="block text-lg font-medium mb-2">Kanji Progress</label>
+                            <div class="w-full bg-slate-700 rounded-full h-2.5 mb-3">
+                                <div id="kanji-progress-bar" class="bg-gradient-to-r from-indigo-500 to-sky-500 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-400">0</span>
+                                <div class="flex items-center gap-3">
+                                    <button id="kanji-minus" class="progress-control-btn">-</button>
+                                    <span id="kanji-count" class="text-xl font-bold w-12 text-center">0</span>
+                                    <button id="kanji-plus" class="progress-control-btn">+</button>
+                                </div>
+                                <span class="text-sm text-slate-400">200</span>
+                            </div>
                         </div>
                     </div>
-                    <!-- Kanji Progress -->
-                    <div>
-                        <label class="block text-lg font-medium mb-2">Kanji Progress</label>
-                        <div class="w-full bg-slate-700 rounded-full h-2.5 mb-3">
-                            <div id="kanji-progress-bar" class="bg-gradient-to-r from-indigo-500 to-sky-500 h-2.5 rounded-full" style="width: 0%"></div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-slate-400">0</span>
-                            <div class="flex items-center gap-3">
-                                <button id="kanji-minus" class="progress-control-btn">-</button>
-                                <span id="kanji-count" class="text-xl font-bold w-12 text-center">0</span>
-                                <button id="kanji-plus" class="progress-control-btn">+</button>
-                            </div>
-                            <span class="text-sm text-slate-400">200</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Focus, Timer & Streak Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-                <!-- Today's Focus -->
-                <div class="lg:col-span-2 bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10">
-                     <h3 class="text-xl font-semibold mb-4 text-sky-300 flex items-center"><i data-lucide="list-checks" class="icon text-sky-300"></i>Today's Focus</h3>
-                     <form id="add-focus-form" class="mb-4 flex gap-3">
-                        <input type="text" id="new-focus-input" class="flex-grow bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" placeholder="What is your main goal today?" required>
-                        <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Add</button>
-                    </form>
-                    <div id="focus-list" class="space-y-2"></div>
                 </div>
 
                 <!-- Timers & Stats -->
-                <div class="space-y-8">
-                    <!-- Pomodoro Timer -->
-                     <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 text-center">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <!-- Pomodoro Timer -->
+                     <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 text-center flex flex-col justify-center">
                          <h3 class="text-xl font-semibold mb-4 text-sky-300">🍅 Pomodoro Timer</h3>
                          <div id="pomodoro-timer" class="text-6xl font-bold text-indigo-400">25:00</div>
                          <div class="flex justify-center gap-2 my-4">
                              <button id="pomo-mode-pomodoro" class="timer-mode-btn active px-3 py-1 rounded-md text-sm">Study</button>
-                             <button id="pomo-mode-short" class="timer-mode-btn px-3 py-1 rounded-md text-sm">Short Break</button>
-                             <button id="pomo-mode-long" class="timer-mode-btn px-3 py-1 rounded-md text-sm">Long Break</button>
+                             <button id="pomo-mode-short" class="timer-mode-btn px-3 py-1 rounded-md text-sm">Short</button>
+                             <button id="pomo-mode-long" class="timer-mode-btn px-3 py-1 rounded-md text-sm">Long</button>
                          </div>
                          <div class="flex justify-center gap-4">
                             <button id="pomo-start-pause" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-6 rounded-lg transition-colors">Start</button>
@@ -176,7 +131,7 @@
                          </div>
                      </div>
                     <!-- Study Streak -->
-                     <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 text-center">
+                     <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 text-center flex flex-col justify-center">
                          <h3 class="text-xl font-semibold mb-4 text-sky-300">🔥 Study Streak</h3>
                          <div class="flex items-center justify-center">
                              <span id="streak-count" class="text-6xl font-bold text-indigo-400">0</span>
@@ -187,93 +142,51 @@
                 </div>
             </div>
 
-            <!-- Weekly Review Section -->
+            <!-- Unified Task Board -->
+            <section id="mission-control" class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 mb-8">
+                 <h2 class="text-2xl font-bold mb-4 text-center gradient-text">Mission Control</h2>
+                 <form id="add-task-form" class="mb-6 flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="text" id="new-task-input" class="flex-grow w-full bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" placeholder="Add a new task..." required>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2"><input type="radio" name="task-type" value="dev" class="form-radio bg-slate-600 border-slate-500 text-sky-500 focus:ring-sky-500" checked><span class="text-sky-300 font-medium">Dev</span></label>
+                        <label class="flex items-center gap-2"><input type="radio" name="task-type" value="learning" class="form-radio bg-slate-600 border-slate-500 text-indigo-500 focus:ring-indigo-500"><span class="text-indigo-300 font-medium">Learn</span></label>
+                    </div>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors w-full sm:w-auto">Add Task</button>
+                </form>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-red-400 flex justify-center items-center gap-2">To Do <span id="todo-count" class="text-xs bg-red-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
+                        <div id="todo-column" class="kanban-column space-y-3 p-2 bg-slate-900/50 rounded-lg"></div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-yellow-400 flex justify-center items-center gap-2">In Progress <span id="inprogress-count" class="text-xs bg-yellow-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
+                        <div id="inprogress-column" class="kanban-column space-y-3 p-2 bg-slate-900/50 rounded-lg"></div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-green-400 flex justify-center items-center gap-2">Done <span id="done-count" class="text-xs bg-green-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
+                        <div id="done-column" class="kanban-column space-y-3 p-2 bg-slate-900/50 rounded-lg"></div>
+                    </div>
+                </div>
+            </section>
+            
+             <!-- Simplified Weekly Review Section -->
             <section id="weekly-review" class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 mb-8">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-center gradient-text">Weekly Review & Planning</h2>
+                    <h2 class="text-2xl font-bold text-center gradient-text">Weekly Review</h2>
                     <button id="view-history-btn" class="bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center">
                         <i data-lucide="history" class="w-4 h-4 mr-2"></i>View History
                     </button>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Left Column: Wins -->
-                    <div>
-                        <h3 class="text-lg font-semibold mb-3 text-sky-300 flex items-center"><i data-lucide="award" class="icon text-sky-300"></i>Last Week's Wins</h3>
-                        <div class="bg-slate-800/50 p-4 rounded-lg space-y-4 min-h-[100px]">
-                            <div>
-                                <h4 class="font-semibold mb-2">Developer Tasks</h4>
-                                <ul id="dev-wins-list" class="list-disc list-inside text-sm text-slate-300 space-y-1"><li>Nothing yet.</li></ul>
-                            </div>
-                             <div>
-                                <h4 class="font-semibold mb-2">Learning Tasks</h4>
-                                <ul id="learning-wins-list" class="list-disc list-inside text-sm text-slate-300 space-y-1"><li>Nothing yet.</li></ul>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Right Column: Plan -->
-                    <div>
-                         <h3 class="text-lg font-semibold mb-3 text-sky-300 flex items-center"><i data-lucide="map" class="icon text-sky-300"></i>This Week's Plan</h3>
-                         <div class="bg-slate-800/50 p-4 rounded-lg">
-                            <form id="add-weekly-goal-form" class="mb-4 flex gap-3">
-                                <input type="text" id="new-weekly-goal-input" class="flex-grow bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400 text-sm" placeholder="Add a weekly priority..." required>
-                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm">Add</button>
-                            </form>
-                            <div id="weekly-goals-list" class="space-y-2 mb-4"></div>
-                            <button id="archive-tasks-btn" class="w-full bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center">
-                                <i data-lucide="archive" class="w-4 h-4 mr-2"></i>Start New Week & Archive Completed
-                            </button>
-                         </div>
-                    </div>
+                <div class="bg-slate-800/50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-3 text-sky-300 flex items-center"><i data-lucide="award" class="icon text-sky-300"></i>Last Week's Wins</h3>
+                    <ul id="wins-list" class="list-disc list-inside text-sm text-slate-300 space-y-1 mb-4"><li>Nothing yet.</li></ul>
+                    <button id="archive-tasks-btn" class="w-full bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center">
+                        <i data-lucide="archive" class="w-4 h-4 mr-2"></i>Start New Week & Archive Completed
+                    </button>
                 </div>
             </section>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Left Column: Dev Task Board -->
-                <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10">
-                    <h3 class="text-xl font-semibold mb-4 text-sky-300 flex items-center"><i data-lucide="code" class="icon text-sky-300"></i>Developer Task Board</h3>
-                     <form id="add-dev-task-form" class="mb-6 flex gap-3">
-                        <input type="text" id="new-dev-task-input" class="flex-grow bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" placeholder="Add a new dev task..." required>
-                        <button type="submit" class="bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Add</button>
-                    </form>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        <div>
-                            <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-red-400 flex justify-center items-center gap-2">To Do <span id="dev-todo-count" class="text-xs bg-red-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
-                            <div id="dev-todo-column" class="kanban-column space-y-3 p-2 bg-slate-900/50 rounded-lg"></div>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-yellow-400 flex justify-center items-center gap-2">In Progress <span id="dev-inprogress-count" class="text-xs bg-yellow-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
-                            <div id="dev-inprogress-column" class="kanban-column space-y-3 p-2 bg-slate-900/50 rounded-lg"></div>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-green-400 flex justify-center items-center gap-2">Done <span id="dev-done-count" class="text-xs bg-green-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
-                            <div id="dev-done-column" class="kanban-column space-y-3 p-2 bg-slate-900/50 rounded-lg"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Learning Task Board -->
-                 <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10">
-                    <h3 class="text-xl font-semibold mb-4 text-sky-300 flex items-center"><i data-lucide="book-open" class="icon text-sky-300"></i>Learning Task Board</h3>
-                     <form id="add-learning-task-form" class="mb-6 flex gap-3">
-                        <input type="text" id="new-learning-task-input" class="flex-grow bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" placeholder="Add a new learning task..." required>
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Add</button>
-                    </form>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        <div>
-                            <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-red-400 flex justify-center items-center gap-2">To Do <span id="learning-todo-count" class="text-xs bg-red-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
-                            <div id="learning-todo-column" class="kanban-column space-y-3 p-2 bg-slate-900/50 rounded-lg"></div>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-yellow-400 flex justify-center items-center gap-2">In Progress <span id="learning-inprogress-count" class="text-xs bg-yellow-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
-                            <div id="learning-inprogress-column" class="kanban-column space-y-3 p-2 bg-slate-900/50 rounded-lg"></div>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-green-400 flex justify-center items-center gap-2">Done <span id="learning-done-count" class="text-xs bg-green-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
-                            <div id="learning-done-column" class="kanban-column space-y-3 p-2 bg-slate-900/50 rounded-lg"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </section>
 
         <!-- Application Cards Grid -->
@@ -282,9 +195,7 @@
                 <h2 class="text-3xl font-bold text-gray-300">Public Study Tools</h2>
                  <p class="text-slate-400 mt-1">My open-source projects for Japanese learners.</p>
             </header>
-            <div id="app-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="col-span-full text-center py-12 text-gray-500">Loading applications...</div>
-            </div>
+            <div id="app-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </section>
 
         <!-- Footer -->
@@ -300,9 +211,7 @@
                 <h2 class="text-xl font-bold gradient-text">Completed Task History</h2>
                 <button id="close-history-btn" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
             </header>
-            <div id="history-content" class="p-6 overflow-y-auto space-y-4">
-                <!-- History content will be generated here -->
-            </div>
+            <div id="history-content" class="p-6 overflow-y-auto space-y-4"></div>
         </div>
     </div>
 
@@ -310,8 +219,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
-            // --- PRODUCTIVITY HUB LOGIC ---
-            const STORAGE_KEY = 'productivityHubData';
+            const STORAGE_KEY = 'productivityHubData_v2';
             
             // --- Elements ---
             const countdownEl = document.getElementById('countdown');
@@ -324,19 +232,12 @@
             const kanjiPlusBtn = document.getElementById('kanji-plus');
             const kanjiMinusBtn = document.getElementById('kanji-minus');
 
-            const addDevTaskForm = document.getElementById('add-dev-task-form');
-            const newDevTaskInput = document.getElementById('new-dev-task-input');
-            const devColumns = { todo: document.getElementById('dev-todo-column'), inprogress: document.getElementById('dev-inprogress-column'), done: document.getElementById('dev-done-column') };
-            const devTaskCounters = { todo: document.getElementById('dev-todo-count'), inprogress: document.getElementById('dev-inprogress-count'), done: document.getElementById('dev-done-count') };
-
-            const addLearningTaskForm = document.getElementById('add-learning-task-form');
-            const newLearningTaskInput = document.getElementById('new-learning-task-input');
-            const learningColumns = { todo: document.getElementById('learning-todo-column'), inprogress: document.getElementById('learning-inprogress-column'), done: document.getElementById('learning-done-column') };
-            const learningTaskCounters = { todo: document.getElementById('learning-todo-count'), inprogress: document.getElementById('learning-inprogress-count'), done: document.getElementById('learning-done-count') };
+            // Unified Task Board Elements
+            const addTaskForm = document.getElementById('add-task-form');
+            const newTaskInput = document.getElementById('new-task-input');
+            const taskColumns = { todo: document.getElementById('todo-column'), inprogress: document.getElementById('inprogress-column'), done: document.getElementById('done-column') };
+            const taskCounters = { todo: document.getElementById('todo-count'), inprogress: document.getElementById('inprogress-count'), done: document.getElementById('done-count') };
             
-            const addFocusForm = document.getElementById('add-focus-form');
-            const newFocusInput = document.getElementById('new-focus-input');
-            const focusListEl = document.getElementById('focus-list');
             const pomodoroTimerEl = document.getElementById('pomodoro-timer');
             const pomoStartPauseBtn = document.getElementById('pomo-start-pause');
             const pomoResetBtn = document.getElementById('pomo-reset');
@@ -344,11 +245,7 @@
             const streakCountEl = document.getElementById('streak-count');
             const lastStreakDateEl = document.getElementById('last-streak-date');
             
-            const devWinsListEl = document.getElementById('dev-wins-list');
-            const learningWinsListEl = document.getElementById('learning-wins-list');
-            const addWeeklyGoalForm = document.getElementById('add-weekly-goal-form');
-            const newWeeklyGoalInput = document.getElementById('new-weekly-goal-input');
-            const weeklyGoalsListEl = document.getElementById('weekly-goals-list');
+            const winsListEl = document.getElementById('wins-list');
             const archiveTasksBtn = document.getElementById('archive-tasks-btn');
 
             const historyModal = document.getElementById('history-modal');
@@ -356,27 +253,16 @@
             const closeHistoryBtn = document.getElementById('close-history-btn');
             const historyContentEl = document.getElementById('history-content');
 
-
             // --- Data & State ---
             let data = {
-                devTasks: [],
-                learningTasks: [],
+                tasks: [],
                 currentLesson: 1,
                 kanjiLearned: 0,
-                todayFocus: [],
-                lastFocusDate: null,
                 studyStreak: { current: 0, lastUpdate: null },
-                weeklyGoals: [],
                 tasksArchive: []
             };
 
-            let pomoState = {
-                timerId: null,
-                mode: 'pomodoro',
-                timeRemaining: 1500,
-                isRunning: false,
-                times: { pomodoro: 1500, short: 300, long: 900 }
-            };
+            let pomoState = { timerId: null, mode: 'pomodoro', timeRemaining: 1500, isRunning: false, times: { pomodoro: 1500, short: 300, long: 900 } };
             
             // --- Data Persistence ---
             const saveData = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -384,13 +270,10 @@
                 const savedData = localStorage.getItem(STORAGE_KEY);
                 if (savedData) {
                     data = JSON.parse(savedData);
-                    if (!data.devTasks) data.devTasks = [];
-                    if (!data.learningTasks) data.learningTasks = [];
+                    if (!data.tasks) data.tasks = [];
                     if (data.kanjiLearned === undefined) data.kanjiLearned = 0;
                     if (data.currentLesson === undefined) data.currentLesson = 1;
-                    if (!data.todayFocus) data.todayFocus = [];
                     if (!data.studyStreak) data.studyStreak = { current: 0, lastUpdate: null };
-                    if (!data.weeklyGoals) data.weeklyGoals = [];
                     if (!data.tasksArchive) data.tasksArchive = [];
                 }
             };
@@ -410,55 +293,18 @@
                 progressBarEl.style.width = `${percentage}%`;
                 lessonCountEl.textContent = data.currentLesson;
             };
-
             const updateKanjiProgressBar = () => {
                 if(!kanjiProgressBarEl || !kanjiCountEl) return;
                 const percentage = (data.kanjiLearned / 200) * 100;
                 kanjiProgressBarEl.style.width = `${percentage}%`;
                 kanjiCountEl.textContent = data.kanjiLearned;
             };
-
-            const renderFocusList = () => {
-                if (!focusListEl) return;
-                focusListEl.innerHTML = data.todayFocus.length === 0 
-                    ? `<p class="text-slate-500 text-sm text-center py-4">No goals set for today.</p>`
-                    : data.todayFocus.map((item, index) => `
-                        <div class="focus-item flex items-center bg-slate-700/50 p-3 rounded-md ${item.completed ? 'completed' : ''}">
-                            <input type="checkbox" id="focus-${index}" class="form-checkbox h-5 w-5 bg-slate-600 border-slate-500 rounded text-indigo-500 focus:ring-indigo-500" ${item.completed ? 'checked' : ''} data-index="${index}">
-                            <label for="focus-${index}" class="ml-3 flex-grow"><p>${item.text}</p></label>
-                        </div>
-                    `).join('');
-                
-                focusListEl.querySelectorAll('input[type="checkbox"]').forEach(box => {
-                    box.addEventListener('change', (e) => {
-                        const index = e.target.dataset.index;
-                        data.todayFocus[index].completed = e.target.checked;
-                        if (e.target.checked) updateStudyStreak();
-                        saveData();
-                        renderFocusList();
-                    });
-                });
-            };
-
-            const handleAddFocus = (e) => {
-                e.preventDefault();
-                const text = newFocusInput.value.trim();
-                if (text) {
-                    data.todayFocus.push({ text, completed: false });
-                    newFocusInput.value = '';
-                    saveData();
-                    renderFocusList();
-                }
-            };
-
             const updateStudyStreak = () => {
                 const today = getTodayDateString();
                 if (data.studyStreak.lastUpdate === today) return;
-
                 const yesterday = new Date();
                 yesterday.setDate(yesterday.getDate() - 1);
                 const yesterdayStr = yesterday.toISOString().split('T')[0];
-
                 if (data.studyStreak.lastUpdate === yesterdayStr) {
                     data.studyStreak.current += 1;
                 } else {
@@ -468,23 +314,19 @@
                 saveData();
                 renderStudyStreak();
             };
-            
             const renderStudyStreak = () => {
                 if (!streakCountEl) return;
                 const today = getTodayDateString();
                 const yesterday = new Date();
                 yesterday.setDate(yesterday.getDate() - 1);
                 const yesterdayStr = yesterday.toISOString().split('T')[0];
-
                 if (data.studyStreak.lastUpdate && data.studyStreak.lastUpdate < yesterdayStr) {
                     data.studyStreak.current = 0;
                     saveData();
                 }
-
                 streakCountEl.textContent = data.studyStreak.current;
                 lastStreakDateEl.textContent = data.studyStreak.lastUpdate ? `Last activity: ${data.studyStreak.lastUpdate}` : 'No activity yet.';
             };
-
             const playSound = () => {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
@@ -494,14 +336,12 @@
                 oscillator.start();
                 setTimeout(() => oscillator.stop(), 500);
             };
-
             const updatePomoDisplay = () => {
                 if (!pomodoroTimerEl) return;
                 const minutes = Math.floor(pomoState.timeRemaining / 60);
                 const seconds = pomoState.timeRemaining % 60;
                 pomodoroTimerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             };
-
             const startPomoTimer = () => {
                 if (pomoState.isRunning || !pomoStartPauseBtn) return;
                 pomoState.isRunning = true;
@@ -518,13 +358,11 @@
                     }
                 }, 1000);
             };
-
             const pausePomoTimer = () => {
                 clearInterval(pomoState.timerId);
                 pomoState.isRunning = false;
                 if(pomoStartPauseBtn) pomoStartPauseBtn.textContent = 'Start';
             };
-            
             const switchPomoMode = (mode) => {
                 pausePomoTimer();
                 pomoState.mode = mode;
@@ -534,157 +372,114 @@
                 updatePomoDisplay();
             };
             
+            // --- Simplified Weekly Review ---
             const renderWeeklyReview = () => {
+                if(!winsListEl) return;
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-                const renderWins = (tasks, listElement) => {
-                    if(!listElement) return;
-                    const recentWins = tasks.filter(task => task.status === 'done' && new Date(task.completedDate) > oneWeekAgo);
-                    if (recentWins.length > 0) {
-                        listElement.innerHTML = recentWins.map(task => `<li>${task.text}</li>`).join('');
-                    } else {
-                        listElement.innerHTML = `<li>No tasks completed in the last 7 days.</li>`;
-                    }
-                };
+                const recentWins = [...data.tasks, ...data.tasksArchive].filter(task => task.status === 'done' && task.completedDate && new Date(task.completedDate) > oneWeekAgo);
                 
-                renderWins(data.devTasks, devWinsListEl);
-                renderWins(data.learningTasks, learningWinsListEl);
-                renderWeeklyGoals();
-            };
-
-            const renderWeeklyGoals = () => {
-                if (!weeklyGoalsListEl) return;
-                weeklyGoalsListEl.innerHTML = data.weeklyGoals.length === 0
-                    ? `<p class="text-slate-500 text-sm text-center py-2">No weekly goals set.</p>`
-                    : data.weeklyGoals.map((item, index) => `
-                        <div class="weekly-goal flex items-center bg-slate-700/50 p-3 rounded-md text-sm ${item.completed ? 'completed' : ''}">
-                            <input type="checkbox" id="w-goal-${index}" class="form-checkbox h-4 w-4 bg-slate-600 border-slate-500 rounded text-indigo-500 focus:ring-indigo-500" ${item.completed ? 'checked' : ''} data-index="${index}">
-                            <label for="w-goal-${index}" class="ml-3 flex-grow"><p>${item.text}</p></label>
-                        </div>
-                    `).join('');
-                
-                weeklyGoalsListEl.querySelectorAll('input[type="checkbox"]').forEach(box => {
-                    box.addEventListener('change', (e) => {
-                        const index = e.target.dataset.index;
-                        data.weeklyGoals[index].completed = e.target.checked;
-                        saveData();
-                        renderWeeklyGoals();
-                    });
-                });
+                if (recentWins.length > 0) {
+                     winsListEl.innerHTML = recentWins.map(task => {
+                        const typeLabel = task.type === 'dev' 
+                            ? '<span class="text-xs font-semibold bg-sky-500/50 text-sky-200 px-2 py-0.5 rounded-full ml-2">Dev</span>' 
+                            : '<span class="text-xs font-semibold bg-indigo-500/50 text-indigo-200 px-2 py-0.5 rounded-full ml-2">Learn</span>';
+                        return `<li>${task.text} ${typeLabel}</li>`;
+                     }).join('');
+                } else {
+                    winsListEl.innerHTML = `<li>No tasks completed in the last 7 days.</li>`;
+                }
             };
 
             const handleArchiveTasks = () => {
-                const completedDev = data.devTasks.filter(t => t.status === 'done');
-                const completedLearning = data.learningTasks.filter(t => t.status === 'done');
-
-                data.tasksArchive.push(...completedDev, ...completedLearning);
-                data.devTasks = data.devTasks.filter(t => t.status !== 'done');
-                data.learningTasks = data.learningTasks.filter(t => t.status !== 'done');
-                data.weeklyGoals = [];
-
+                const completed = data.tasks.filter(t => t.status === 'done');
+                data.tasksArchive.push(...completed);
+                data.tasks = data.tasks.filter(t => t.status !== 'done');
                 saveData();
-                renderTasks('dev');
-                renderTasks('learning');
+                renderTasks();
                 renderWeeklyReview();
             };
 
-            const openHistoryModal = () => {
-                renderHistory();
-                historyModal.classList.remove('hidden');
-            };
-
-            const closeHistoryModal = () => {
-                historyModal.classList.add('hidden');
-            };
-
+            // --- Task History Modal ---
+            const openHistoryModal = () => { renderHistory(); historyModal.classList.remove('hidden'); };
+            const closeHistoryModal = () => { historyModal.classList.add('hidden'); };
             const renderHistory = () => {
-                const allDoneTasks = [
-                    ...data.tasksArchive,
-                    ...data.devTasks.filter(t => t.status === 'done'),
-                    ...data.learningTasks.filter(t => t.status === 'done')
-                ];
-
+                const allDoneTasks = [...data.tasksArchive, ...data.tasks.filter(t => t.status === 'done')];
                 const uniqueTasks = Array.from(new Map(allDoneTasks.map(task => [task.id, task])).values());
-
                 const tasksByDay = uniqueTasks.reduce((acc, task) => {
                     if(!task.completedDate) return acc;
                     const date = new Date(task.completedDate).toISOString().split('T')[0];
-                    if (!acc[date]) {
-                        acc[date] = [];
-                    }
+                    if (!acc[date]) acc[date] = [];
                     acc[date].push(task);
                     return acc;
                 }, {});
 
                 const sortedDays = Object.keys(tasksByDay).sort((a, b) => new Date(b) - new Date(a));
-
                 if (sortedDays.length === 0) {
-                    historyContentEl.innerHTML = '<p class="text-slate-500 text-center">No completed tasks yet.</p>';
-                    return;
+                    historyContentEl.innerHTML = '<p class="text-slate-500 text-center">No completed tasks yet.</p>'; return;
                 }
-
                 historyContentEl.innerHTML = sortedDays.map(day => {
                     const date = new Date(day);
-                     const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     const tasksHtml = tasksByDay[day].map(task => {
                         const typeLabel = task.type === 'dev' 
                             ? '<span class="text-xs font-semibold bg-sky-500/50 text-sky-200 px-2 py-0.5 rounded-full ml-2">Dev</span>' 
                             : '<span class="text-xs font-semibold bg-indigo-500/50 text-indigo-200 px-2 py-0.5 rounded-full ml-2">Learn</span>';
                         return `<li class="text-slate-300">${task.text} ${typeLabel}</li>`;
                     }).join('');
-
-                    return `
-                        <details class="bg-slate-800/50 p-3 rounded-lg" open>
-                            <summary class="font-semibold text-lg text-slate-200">${formattedDate}</summary>
-                            <ul class="mt-2 pl-4 space-y-1 list-disc list-inside">${tasksHtml}</ul>
-                        </details>
-                    `;
+                    return `<details class="bg-slate-800/50 p-3 rounded-lg" open><summary class="font-semibold text-lg text-slate-200">${formattedDate}</summary><ul class="mt-2 pl-4 space-y-1 list-disc list-inside">${tasksHtml}</ul></details>`;
                 }).join('');
             };
 
-            const createTaskElement = (task, type) => {
+            // --- Unified Task Board Logic ---
+            const createTaskElement = (task) => {
                 const taskEl = document.createElement('div');
-                taskEl.className = 'task bg-slate-700 p-3 rounded-lg shadow';
+                taskEl.className = `task bg-slate-700 p-3 rounded-lg shadow flex justify-between items-center ${task.priority ? 'priority' : ''}`;
                 taskEl.draggable = true;
                 taskEl.dataset.id = task.id;
-                taskEl.innerHTML = `<button class="float-right text-slate-400 hover:text-red-400 font-bold -mt-1 text-lg">&times;</button><p>${task.text}</p>`;
-                taskEl.querySelector('button').onclick = () => deleteTask(task.id, type);
-                taskEl.addEventListener('dragstart', (e) => {
-                    e.target.classList.add('dragging');
-                    e.dataTransfer.setData('taskId', task.id);
-                    e.dataTransfer.setData('taskType', type);
-                });
+
+                const typeBadge = task.type === 'dev'
+                    ? '<span class="text-xs font-semibold bg-sky-500/50 text-sky-200 px-2 py-1 rounded-full">Dev</span>'
+                    : '<span class="text-xs font-semibold bg-indigo-500/50 text-indigo-200 px-2 py-1 rounded-full">Learn</span>';
+
+                taskEl.innerHTML = `
+                    <div class="flex items-center">
+                        ${typeBadge}
+                        <p class="ml-3">${task.text}</p>
+                    </div>
+                    <div class="task-actions flex items-center">
+                        <button class="priority-btn text-slate-400 hover:text-amber-400">${task.priority ? '★' : '☆'}</button>
+                        <button class="delete-btn text-slate-400 hover:text-red-400 font-bold ml-2 text-lg">&times;</button>
+                    </div>
+                `;
+                
+                taskEl.querySelector('.delete-btn').onclick = () => { data.tasks = data.tasks.filter(t => t.id !== task.id); saveData(); renderTasks(); };
+                taskEl.querySelector('.priority-btn').onclick = () => { 
+                    const targetTask = data.tasks.find(t => t.id === task.id);
+                    if(targetTask) targetTask.priority = !targetTask.priority; 
+                    saveData(); 
+                    renderTasks(); 
+                };
+                
+                taskEl.addEventListener('dragstart', (e) => { e.target.classList.add('dragging'); e.dataTransfer.setData('taskId', task.id); });
                 taskEl.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
                 return taskEl;
             };
 
-            const deleteTask = (id, type) => {
-                data[`${type}Tasks`] = data[`${type}Tasks`].filter(task => task.id !== id);
-                saveData();
-                renderTasks(type);
-            };
-
-            const renderTasks = (type) => {
-                const taskList = data[`${type}Tasks`];
-                const columns = type === 'dev' ? devColumns : learningColumns;
-                if(!columns.todo) return;
-                Object.values(columns).forEach(col => col.innerHTML = '');
-                taskList.forEach(task => {
-                    const taskEl = createTaskElement(task, type);
-                    columns[task.status]?.appendChild(taskEl);
+            const renderTasks = () => {
+                Object.values(taskColumns).forEach(col => col.innerHTML = '');
+                data.tasks.forEach(task => {
+                    const taskEl = createTaskElement(task);
+                    taskColumns[task.status]?.appendChild(taskEl);
                 });
-                updateTaskCounts(type);
+                updateTaskCounts();
             };
             
-            const updateTaskCounts = (type) => {
-                 const counters = type === 'dev' ? devTaskCounters : learningTaskCounters;
-                 const tasks = data[`${type}Tasks`];
-                 if(!counters.todo) return;
-                 counters.todo.textContent = tasks.filter(t => t.status === 'todo').length;
-                 counters.inprogress.textContent = tasks.filter(t => t.status === 'inprogress').length;
-                 const doneTasks = tasks.filter(t => t.status === 'done').length + data.tasksArchive.filter(t => t.type === type).length;
-                 counters.done.textContent = tasks.filter(t => t.status === 'done').length;
+            const updateTaskCounts = () => {
+                 if(!taskCounters.todo) return;
+                 taskCounters.todo.textContent = data.tasks.filter(t => t.status === 'todo').length;
+                 taskCounters.inprogress.textContent = data.tasks.filter(t => t.status === 'inprogress').length;
+                 taskCounters.done.textContent = data.tasks.filter(t => t.status === 'done').length;
             };
 
             const getDragAfterElement = (container, y) => {
@@ -692,41 +487,30 @@
                 return draggableElements.reduce((closest, child) => {
                     const box = child.getBoundingClientRect();
                     const offset = y - box.top - box.height / 2;
-                    if (offset < 0 && offset > closest.offset) {
-                        return { offset: offset, element: child };
-                    } else {
-                        return closest;
-                    }
+                    if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } 
+                    else { return closest; }
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
             };
 
             const initDashboard = () => {
                 loadData();
-
-                const today = getTodayDateString();
-                if (data.lastFocusDate !== today) {
-                    data.todayFocus = [];
-                    data.lastFocusDate = today;
-                }
-
                 calculateCountdown();
                 setInterval(calculateCountdown, 1000 * 60 * 60);
                 
+                // Render all components
                 updateLessonProgressBar();
                 updateKanjiProgressBar();
-                renderFocusList();
                 renderStudyStreak();
                 updatePomoDisplay();
                 renderWeeklyReview();
-                renderTasks('dev');
-                renderTasks('learning');
+                renderTasks();
                 
+                // --- Event Listeners ---
                 lessonPlusBtn?.addEventListener('click', () => { if (data.currentLesson < 50) data.currentLesson++; updateLessonProgressBar(); saveData(); });
                 lessonMinusBtn?.addEventListener('click', () => { if (data.currentLesson > 1) data.currentLesson--; updateLessonProgressBar(); saveData(); });
                 kanjiPlusBtn?.addEventListener('click', () => { if (data.kanjiLearned < 200) data.kanjiLearned++; updateKanjiProgressBar(); saveData(); });
                 kanjiMinusBtn?.addEventListener('click', () => { if (data.kanjiLearned > 0) data.kanjiLearned--; updateKanjiProgressBar(); saveData(); });
 
-                addFocusForm?.addEventListener('submit', handleAddFocus);
                 pomoStartPauseBtn?.addEventListener('click', () => pomoState.isRunning ? pausePomoTimer() : startPomoTimer());
                 pomoResetBtn?.addEventListener('click', () => switchPomoMode(pomoState.mode));
                 Object.values(pomoModeButtons).forEach((btn, index) => {
@@ -734,71 +518,49 @@
                     btn?.addEventListener('click', () => switchPomoMode(mode));
                 });
 
-                addWeeklyGoalForm?.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const text = newWeeklyGoalInput.value.trim();
-                    if (text) {
-                        data.weeklyGoals.push({ text, completed: false });
-                        newWeeklyGoalInput.value = '';
-                        saveData();
-                        renderWeeklyGoals();
-                    }
-                });
                 archiveTasksBtn?.addEventListener('click', handleArchiveTasks);
-
                 viewHistoryBtn?.addEventListener('click', openHistoryModal);
                 closeHistoryBtn?.addEventListener('click', closeHistoryModal);
-                historyModal?.addEventListener('click', (e) => {
-                    if (e.target === historyModal) closeHistoryModal();
+                historyModal?.addEventListener('click', (e) => { if (e.target === historyModal) closeHistoryModal(); });
+
+                addTaskForm?.addEventListener('submit', (e) => { 
+                    e.preventDefault(); 
+                    const text = newTaskInput.value.trim();
+                    const type = addTaskForm.querySelector('input[name="task-type"]:checked').value;
+                    if (text) { 
+                        data.tasks.push({ id: `task-${Date.now()}`, text, status: 'todo', type, priority: false });
+                        newTaskInput.value = ''; 
+                        saveData(); 
+                        renderTasks(); 
+                    } 
                 });
 
-                addDevTaskForm?.addEventListener('submit', (e) => { e.preventDefault(); const text = newDevTaskInput.value.trim(); if (text) { data.devTasks.push({ id: `dev-${Date.now()}`, text, status: 'todo', type: 'dev' }); newDevTaskInput.value = ''; saveData(); renderTasks('dev'); } });
-                addLearningTaskForm?.addEventListener('submit', (e) => { e.preventDefault(); const text = newLearningTaskInput.value.trim(); if (text) { data.learningTasks.push({ id: `learning-${Date.now()}`, text, status: 'todo', type: 'learning' }); newLearningTaskInput.value = ''; saveData(); renderTasks('learning'); } });
-
-                const setupDragAndDrop = (type) => {
-                    const columns = type === 'dev' ? devColumns : learningColumns;
-                    Object.entries(columns).forEach(([status, column]) => {
-                        if(!column) return;
-                        column.addEventListener('dragover', e => {
-                            e.preventDefault();
-                             const afterElement = getDragAfterElement(column, e.clientY);
-                             const dragging = document.querySelector('.dragging');
-                             if(dragging) {
-                                if (afterElement == null) {
-                                    column.appendChild(dragging);
-                                } else {
-                                    column.insertBefore(dragging, afterElement);
-                                }
-                             }
-                        });
-                        column.addEventListener('drop', e => {
-                            e.preventDefault();
-                            const taskId = e.dataTransfer.getData('taskId');
-                            const taskType = e.dataTransfer.getData('taskType');
-                            if (taskType !== type) return;
-
-                            const task = data[`${type}Tasks`].find(t => t.id === taskId);
-                            if (task) { 
-                                const oldStatus = task.status;
-                                task.status = status;
-                                if (status === 'done' && oldStatus !== 'done') {
-                                    task.completedDate = new Date().toISOString();
-                                    if (type === 'learning') updateStudyStreak();
-                                }
-                                saveData();
-                                renderTasks(type);
-                                renderWeeklyReview();
+                // Setup Drag and Drop for the unified board
+                Object.entries(taskColumns).forEach(([status, column]) => {
+                    if(!column) return;
+                    column.addEventListener('dragover', e => { e.preventDefault(); const afterElement = getDragAfterElement(column, e.clientY); const dragging = document.querySelector('.dragging'); if(dragging) { if (afterElement == null) { column.appendChild(dragging); } else { column.insertBefore(dragging, afterElement); } } });
+                    column.addEventListener('drop', e => {
+                        e.preventDefault();
+                        const taskId = e.dataTransfer.getData('taskId');
+                        const task = data.tasks.find(t => t.id === taskId);
+                        if (task) { 
+                            const oldStatus = task.status;
+                            task.status = status;
+                            if (status === 'done' && oldStatus !== 'done') {
+                                task.completedDate = new Date().toISOString();
+                                if (task.type === 'learning') updateStudyStreak();
                             }
-                        });
+                            saveData();
+                            renderTasks();
+                            renderWeeklyReview();
+                        }
                     });
-                };
-                setupDragAndDrop('dev');
-                setupDragAndDrop('learning');
+                });
             };
 
             initDashboard();
 
-            // --- PUBLIC PROJECTS LOGIC ---
+            // --- PUBLIC PROJECTS LOGIC (No changes) ---
             const apps = [
                { name: "JLPT N5 Kotoba (Vocabulary)", description: "A focused study tool for mastering the essential vocabulary required for the Japanese Language Proficiency Test N5 level.", demoUrl: "https://kh125.github.io/jlpt-n5-kotoba/", repoUrl: "https://github.com/kh125/jlpt-n5-kotoba", icon: "book-open" },
                { name: "Kanji Flashcards & Practice", description: "A dedicated application for practicing and learning fundamental Kanji characters. Essential for N5 and beyond.", demoUrl: "https://kh125.github.io/kanji/", repoUrl: "https://github.com/kh125/kanji", icon: "type" }
@@ -830,8 +592,8 @@
                 });
                 if (typeof lucide !== 'undefined') { lucide.createIcons(); }
             }
-
             renderAppCards(apps);
+            
         });
     </script>
 </body>
