@@ -53,6 +53,27 @@
         #history-modal details[open] summary { margin-bottom: 0.5rem; }
         .task-actions { opacity: 0; transition: opacity 0.2s; }
         .task:hover .task-actions { opacity: 1; }
+
+        /* Date input styling for dark mode */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+        
+        /* Details/Summary accordion styling */
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        details > summary::after {
+            content: ' ▼';
+            font-size: 0.8em;
+        }
+        details[open] > summary::after {
+            content: ' ▲';
+        }
+
     </style>
 </head>
 <body class="antialiased">
@@ -145,8 +166,9 @@
             <!-- Unified Task Board -->
             <section id="mission-control" class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 mb-8">
                  <h2 class="text-2xl font-bold mb-4 text-center gradient-text">Mission Control</h2>
-                 <form id="add-task-form" class="mb-6 flex flex-col sm:flex-row gap-4 items-center">
-                    <input type="text" id="new-task-input" class="flex-grow w-full bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" placeholder="Add a new task..." required>
+                 <form id="add-task-form" class="mb-6 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+                    <input type="text" id="new-task-input" class="flex-grow w-full sm:w-auto bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" placeholder="Add a new task..." required>
+                    <input type="date" id="new-task-date" class="bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400 text-slate-400">
                     <div class="flex items-center gap-4">
                         <label class="flex items-center gap-2"><input type="radio" name="task-type" value="dev" class="form-radio bg-slate-600 border-slate-500 text-sky-500 focus:ring-sky-500" checked><span class="text-sky-300 font-medium">Dev</span></label>
                         <label class="flex items-center gap-2"><input type="radio" name="task-type" value="learning" class="form-radio bg-slate-600 border-slate-500 text-indigo-500 focus:ring-indigo-500"><span class="text-indigo-300 font-medium">Learn</span></label>
@@ -172,19 +194,21 @@
             
              <!-- Simplified Weekly Review Section -->
             <section id="weekly-review" class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 mb-8">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-center gradient-text">Weekly Review</h2>
-                    <button id="view-history-btn" class="bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center">
-                        <i data-lucide="history" class="w-4 h-4 mr-2"></i>View History
-                    </button>
-                </div>
-                <div class="bg-slate-800/50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-3 text-sky-300 flex items-center"><i data-lucide="award" class="icon text-sky-300"></i>Last Week's Wins</h3>
-                    <ul id="wins-list" class="list-disc list-inside text-sm text-slate-300 space-y-1 mb-4"><li>Nothing yet.</li></ul>
-                    <button id="archive-tasks-btn" class="w-full bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center">
-                        <i data-lucide="archive" class="w-4 h-4 mr-2"></i>Start New Week & Archive Completed
-                    </button>
-                </div>
+                <details>
+                    <summary class="flex justify-between items-center cursor-pointer">
+                        <h2 class="text-2xl font-bold gradient-text">Weekly Review</h2>
+                        <button id="view-history-btn" class="bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center">
+                            <i data-lucide="history" class="w-4 h-4 mr-2"></i>View History
+                        </button>
+                    </summary>
+                    <div class="bg-slate-800/50 p-4 rounded-lg mt-4">
+                        <h3 class="text-lg font-semibold mb-3 text-sky-300 flex items-center"><i data-lucide="award" class="icon text-sky-300"></i>Last Week's Wins</h3>
+                        <ul id="wins-list" class="list-disc list-inside text-sm text-slate-300 space-y-1 mb-4"><li>Nothing yet.</li></ul>
+                        <button id="archive-tasks-btn" class="w-full bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center">
+                            <i data-lucide="archive" class="w-4 h-4 mr-2"></i>Start New Week & Archive Completed
+                        </button>
+                    </div>
+                </details>
             </section>
 
         </section>
@@ -235,6 +259,7 @@
             // Unified Task Board Elements
             const addTaskForm = document.getElementById('add-task-form');
             const newTaskInput = document.getElementById('new-task-input');
+            const newTaskDateInput = document.getElementById('new-task-date');
             const taskColumns = { todo: document.getElementById('todo-column'), inprogress: document.getElementById('inprogress-column'), done: document.getElementById('done-column') };
             const taskCounters = { todo: document.getElementById('todo-count'), inprogress: document.getElementById('inprogress-count'), done: document.getElementById('done-count') };
             
@@ -441,11 +466,29 @@
                 const typeBadge = task.type === 'dev'
                     ? '<span class="text-xs font-semibold bg-sky-500/50 text-sky-200 px-2 py-1 rounded-full">Dev</span>'
                     : '<span class="text-xs font-semibold bg-indigo-500/50 text-indigo-200 px-2 py-1 rounded-full">Learn</span>';
+                
+                let dueDateHtml = '';
+                if (task.dueDate) {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const dueDate = new Date(task.dueDate);
+                    const isOverdue = dueDate < today && task.status !== 'done';
+                    const formattedDate = dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    dueDateHtml = `
+                        <div class="text-xs mt-2 flex items-center ${isOverdue ? 'text-red-400' : 'text-slate-400'}">
+                            <i data-lucide="calendar" class="w-3 h-3 mr-1"></i>
+                            <span>${formattedDate}</span>
+                        </div>
+                    `;
+                }
 
                 taskEl.innerHTML = `
-                    <div class="flex items-center">
-                        ${typeBadge}
-                        <p class="ml-3">${task.text}</p>
+                    <div class="flex-grow">
+                        <div class="flex items-center">
+                            ${typeBadge}
+                            <p class="ml-3">${task.text}</p>
+                        </div>
+                        ${dueDateHtml}
                     </div>
                     <div class="task-actions flex items-center">
                         <button class="priority-btn text-slate-400 hover:text-amber-400">${task.priority ? '★' : '☆'}</button>
@@ -473,6 +516,7 @@
                     taskColumns[task.status]?.appendChild(taskEl);
                 });
                 updateTaskCounts();
+                if (typeof lucide !== 'undefined') { lucide.createIcons(); }
             };
             
             const updateTaskCounts = () => {
@@ -527,9 +571,11 @@
                     e.preventDefault(); 
                     const text = newTaskInput.value.trim();
                     const type = addTaskForm.querySelector('input[name="task-type"]:checked').value;
+                    const dueDate = newTaskDateInput.value;
                     if (text) { 
-                        data.tasks.push({ id: `task-${Date.now()}`, text, status: 'todo', type, priority: false });
-                        newTaskInput.value = ''; 
+                        data.tasks.push({ id: `task-${Date.now()}`, text, status: 'todo', type, priority: false, dueDate: dueDate || null });
+                        newTaskInput.value = '';
+                        newTaskDateInput.value = '';
                         saveData(); 
                         renderTasks(); 
                     } 
