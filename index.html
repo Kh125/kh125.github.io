@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KH</title>
+    <title>kh125's Japanese Study Tools</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Lucide Icons -->
@@ -129,7 +129,7 @@
                                     <span id="kanji-count" class="text-xl font-bold w-12 text-center">0</span>
                                     <button id="kanji-plus" class="progress-control-btn">+</button>
                                 </div>
-                                <span class="text-sm text-slate-400">30</span>
+                                <span class="text-sm text-slate-400">200</span>
                             </div>
                         </div>
                     </div>
@@ -165,17 +165,13 @@
 
             <!-- Unified Task Board -->
             <section id="mission-control" class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 mb-8">
-                 <h2 class="text-2xl font-bold mb-4 text-center gradient-text">Mission Control</h2>
-                 <form id="add-task-form" class="mb-6 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
-                    <input type="text" id="new-task-input" class="flex-grow w-full sm:w-auto bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" placeholder="Add a new task..." required>
-                    <input type="date" id="new-task-date" class="bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400 text-slate-400">
-                    <div class="flex items-center gap-4">
-                        <label class="flex items-center gap-2"><input type="radio" name="task-type" value="dev" class="form-radio bg-slate-600 border-slate-500 text-sky-500 focus:ring-sky-500" checked><span class="text-sky-300 font-medium">Dev</span></label>
-                        <label class="flex items-center gap-2"><input type="radio" name="task-type" value="learning" class="form-radio bg-slate-600 border-slate-500 text-indigo-500 focus:ring-indigo-500"><span class="text-indigo-300 font-medium">Learn</span></label>
-                    </div>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors w-full sm:w-auto">Add Task</button>
-                </form>
-
+                 <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold gradient-text">Mission Control</h2>
+                    <button id="create-task-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors flex items-center">
+                        <i data-lucide="plus" class="w-4 h-4 mr-2"></i>Add Task
+                    </button>
+                 </div>
+                
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     <div>
                         <h4 class="font-semibold text-center mb-4 pb-2 border-b-2 border-red-400 flex justify-center items-center gap-2">To Do <span id="todo-count" class="text-xs bg-red-400/50 text-white rounded-full px-2 py-0.5">0</span></h4>
@@ -228,6 +224,39 @@
         </footer>
     </div>
 
+    <!-- Task Create/Edit Modal -->
+    <div id="task-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-[#161b22] w-full max-w-lg rounded-xl ring-1 ring-white/10 flex flex-col">
+            <header class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 id="task-modal-title" class="text-xl font-bold gradient-text">Add Task</h2>
+                <button id="close-task-modal-btn" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+            </header>
+            <form id="task-form" class="p-6 space-y-4">
+                <input type="hidden" id="task-id-input">
+                <div>
+                    <label for="task-text-input" class="block text-sm font-medium text-slate-300 mb-1">Task Description</label>
+                    <input type="text" id="task-text-input" class="w-full bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" required>
+                </div>
+                <div>
+                    <label for="task-date-input" class="block text-sm font-medium text-slate-300 mb-1">Due Date</label>
+                    <input type="date" id="task-date-input" class="w-full bg-slate-700 rounded-md border-slate-600 p-2 text-slate-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Type</label>
+                    <div class="flex items-center gap-6">
+                        <label class="flex items-center gap-2"><input type="radio" name="modal-task-type" value="dev" class="form-radio bg-slate-600 border-slate-500 text-sky-500 focus:ring-sky-500" checked><span class="text-sky-300 font-medium">Dev</span></label>
+                        <label class="flex items-center gap-2"><input type="radio" name="modal-task-type" value="learning" class="form-radio bg-slate-600 border-slate-500 text-indigo-500 focus:ring-indigo-500"><span class="text-indigo-300 font-medium">Learn</span></label>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-4 pt-4">
+                    <button type="button" id="cancel-task-btn" class="bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Cancel</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     <!-- Task History Modal -->
     <div id="history-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
         <div class="bg-[#161b22] w-full max-w-2xl max-h-[90vh] rounded-xl ring-1 ring-white/10 flex flex-col">
@@ -257,12 +286,20 @@
             const kanjiMinusBtn = document.getElementById('kanji-minus');
 
             // Unified Task Board Elements
-            const addTaskForm = document.getElementById('add-task-form');
-            const newTaskInput = document.getElementById('new-task-input');
-            const newTaskDateInput = document.getElementById('new-task-date');
+            const createTaskBtn = document.getElementById('create-task-btn');
             const taskColumns = { todo: document.getElementById('todo-column'), inprogress: document.getElementById('inprogress-column'), done: document.getElementById('done-column') };
             const taskCounters = { todo: document.getElementById('todo-count'), inprogress: document.getElementById('inprogress-count'), done: document.getElementById('done-count') };
             
+            // Task Modal Elements
+            const taskModal = document.getElementById('task-modal');
+            const taskModalTitle = document.getElementById('task-modal-title');
+            const closeTaskModalBtn = document.getElementById('close-task-modal-btn');
+            const cancelTaskBtn = document.getElementById('cancel-task-btn');
+            const taskForm = document.getElementById('task-form');
+            const taskIdInput = document.getElementById('task-id-input');
+            const taskTextInput = document.getElementById('task-text-input');
+            const taskDateInput = document.getElementById('task-date-input');
+
             const pomodoroTimerEl = document.getElementById('pomodoro-timer');
             const pomoStartPauseBtn = document.getElementById('pomo-start-pause');
             const pomoResetBtn = document.getElementById('pomo-reset');
@@ -320,7 +357,7 @@
             };
             const updateKanjiProgressBar = () => {
                 if(!kanjiProgressBarEl || !kanjiCountEl) return;
-                const percentage = (data.kanjiLearned / 30) * 100;
+                const percentage = (data.kanjiLearned / 200) * 100;
                 kanjiProgressBarEl.style.width = `${percentage}%`;
                 kanjiCountEl.textContent = data.kanjiLearned;
             };
@@ -455,6 +492,49 @@
                     return `<details class="bg-slate-800/50 p-3 rounded-lg" open><summary class="font-semibold text-lg text-slate-200">${formattedDate}</summary><ul class="mt-2 pl-4 space-y-1 list-disc list-inside">${tasksHtml}</ul></details>`;
                 }).join('');
             };
+            
+            // --- Task Modal ---
+            const openTaskModal = (taskId = null) => {
+                taskForm.reset();
+                if (taskId) {
+                    const task = data.tasks.find(t => t.id === taskId);
+                    if (task) {
+                        taskModalTitle.textContent = 'Edit Task';
+                        taskIdInput.value = task.id;
+                        taskTextInput.value = task.text;
+                        taskDateInput.value = task.dueDate || '';
+                        taskForm.querySelector(`input[name="modal-task-type"][value="${task.type}"]`).checked = true;
+                    }
+                } else {
+                    taskModalTitle.textContent = 'Add Task';
+                    taskIdInput.value = '';
+                }
+                taskModal.classList.remove('hidden');
+            };
+            const closeTaskModal = () => taskModal.classList.add('hidden');
+            const handleTaskFormSubmit = (e) => {
+                e.preventDefault();
+                const id = taskIdInput.value;
+                const text = taskTextInput.value.trim();
+                const type = taskForm.querySelector('input[name="modal-task-type"]:checked').value;
+                const dueDate = taskDateInput.value;
+
+                if (!text) return;
+
+                if (id) { // Editing existing task
+                    const task = data.tasks.find(t => t.id === id);
+                    if (task) {
+                        task.text = text;
+                        task.type = type;
+                        task.dueDate = dueDate || null;
+                    }
+                } else { // Creating new task
+                    data.tasks.push({ id: `task-${Date.now()}`, text, status: 'todo', type, priority: false, dueDate: dueDate || null });
+                }
+                saveData();
+                renderTasks();
+                closeTaskModal();
+            };
 
             // --- Unified Task Board Logic ---
             const createTaskElement = (task) => {
@@ -486,13 +566,14 @@
                     <div class="flex-grow">
                         <div class="flex items-center">
                             ${typeBadge}
-                            <p class="ml-3">${task.text}</p>
+                            <p class="ml-3 flex-1">${task.text}</p>
                         </div>
                         ${dueDateHtml}
                     </div>
-                    <div class="task-actions flex items-center">
-                        <button class="priority-btn text-slate-400 hover:text-amber-400">${task.priority ? '★' : '☆'}</button>
-                        <button class="delete-btn text-slate-400 hover:text-red-400 font-bold ml-2 text-lg">&times;</button>
+                    <div class="task-actions flex-shrink-0 flex items-center ml-2">
+                        <button class="priority-btn text-slate-400 hover:text-amber-400 p-1">${task.priority ? '★' : '☆'}</button>
+                        <button class="edit-btn text-slate-400 hover:text-sky-400 p-1"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button class="delete-btn text-slate-400 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 `;
                 
@@ -503,6 +584,7 @@
                     saveData(); 
                     renderTasks(); 
                 };
+                taskEl.querySelector('.edit-btn').onclick = () => openTaskModal(task.id);
                 
                 taskEl.addEventListener('dragstart', (e) => { e.target.classList.add('dragging'); e.dataTransfer.setData('taskId', task.id); });
                 taskEl.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
@@ -552,7 +634,7 @@
                 // --- Event Listeners ---
                 lessonPlusBtn?.addEventListener('click', () => { if (data.currentLesson < 50) data.currentLesson++; updateLessonProgressBar(); saveData(); });
                 lessonMinusBtn?.addEventListener('click', () => { if (data.currentLesson > 1) data.currentLesson--; updateLessonProgressBar(); saveData(); });
-                kanjiPlusBtn?.addEventListener('click', () => { if (data.kanjiLearned < 30) data.kanjiLearned++; updateKanjiProgressBar(); saveData(); });
+                kanjiPlusBtn?.addEventListener('click', () => { if (data.kanjiLearned < 200) data.kanjiLearned++; updateKanjiProgressBar(); saveData(); });
                 kanjiMinusBtn?.addEventListener('click', () => { if (data.kanjiLearned > 0) data.kanjiLearned--; updateKanjiProgressBar(); saveData(); });
 
                 pomoStartPauseBtn?.addEventListener('click', () => pomoState.isRunning ? pausePomoTimer() : startPomoTimer());
@@ -561,45 +643,66 @@
                     const mode = Object.keys(pomoModeButtons)[index];
                     btn?.addEventListener('click', () => switchPomoMode(mode));
                 });
+                
+                // Task Modal Listeners
+                createTaskBtn?.addEventListener('click', () => openTaskModal());
+                closeTaskModalBtn?.addEventListener('click', closeTaskModal);
+                cancelTaskBtn?.addEventListener('click', closeTaskModal);
+                taskModal?.addEventListener('click', (e) => { if (e.target === taskModal) closeTaskModal(); });
+                taskForm?.addEventListener('submit', handleTaskFormSubmit);
+
 
                 archiveTasksBtn?.addEventListener('click', handleArchiveTasks);
                 viewHistoryBtn?.addEventListener('click', openHistoryModal);
                 closeHistoryBtn?.addEventListener('click', closeHistoryModal);
                 historyModal?.addEventListener('click', (e) => { if (e.target === historyModal) closeHistoryModal(); });
 
-                addTaskForm?.addEventListener('submit', (e) => { 
-                    e.preventDefault(); 
-                    const text = newTaskInput.value.trim();
-                    const type = addTaskForm.querySelector('input[name="task-type"]:checked').value;
-                    const dueDate = newTaskDateInput.value;
-                    if (text) { 
-                        data.tasks.push({ id: `task-${Date.now()}`, text, status: 'todo', type, priority: false, dueDate: dueDate || null });
-                        newTaskInput.value = '';
-                        newTaskDateInput.value = '';
-                        saveData(); 
-                        renderTasks(); 
-                    } 
-                });
-
                 // Setup Drag and Drop for the unified board
                 Object.entries(taskColumns).forEach(([status, column]) => {
                     if(!column) return;
                     column.addEventListener('dragover', e => { e.preventDefault(); const afterElement = getDragAfterElement(column, e.clientY); const dragging = document.querySelector('.dragging'); if(dragging) { if (afterElement == null) { column.appendChild(dragging); } else { column.insertBefore(dragging, afterElement); } } });
+                    
                     column.addEventListener('drop', e => {
                         e.preventDefault();
-                        const taskId = e.dataTransfer.getData('taskId');
-                        const task = data.tasks.find(t => t.id === taskId);
-                        if (task) { 
-                            const oldStatus = task.status;
-                            task.status = status;
-                            if (status === 'done' && oldStatus !== 'done') {
-                                task.completedDate = new Date().toISOString();
-                                if (task.type === 'learning') updateStudyStreak();
-                            }
-                            saveData();
-                            renderTasks();
-                            renderWeeklyReview();
-                        }
+                        // The dragged element is visually in the correct place due to the 'dragover' event.
+                        // Now, we update the underlying data array to match the DOM's new order.
+
+                        const reorderedTasks = [];
+                        const statusMap = {
+                            'todo-column': 'todo',
+                            'inprogress-column': 'inprogress',
+                            'done-column': 'done'
+                        };
+
+                        // Iterate over the columns in the DOM to get the new visual order
+                        Object.entries(taskColumns).forEach(([statusKey, colEl]) => {
+                            const tasksInColumn = colEl.querySelectorAll('.task');
+                            tasksInColumn.forEach(taskEl => {
+                                const taskId = taskEl.dataset.id;
+                                // Find the original task object to avoid creating copies
+                                const task = data.tasks.find(t => t.id === taskId);
+                                if (task) {
+                                    const newStatus = statusMap[colEl.id];
+                                    const oldStatus = task.status;
+
+                                    if (newStatus !== oldStatus) {
+                                        task.status = newStatus;
+                                        if (newStatus === 'done' && oldStatus !== 'done') {
+                                            task.completedDate = new Date().toISOString();
+                                            if (task.type === 'learning') updateStudyStreak();
+                                        } else if (newStatus !== 'done' && oldStatus === 'done') {
+                                            task.completedDate = null; // Task moved out of "Done"
+                                        }
+                                    }
+                                    reorderedTasks.push(task);
+                                }
+                            });
+                        });
+
+                        data.tasks = reorderedTasks;
+                        saveData();
+                        renderTasks(); // Re-render to ensure consistency and apply any class changes
+                        renderWeeklyReview();
                     });
                 });
             };
@@ -644,4 +747,3 @@
     </script>
 </body>
 </html>
-
