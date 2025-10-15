@@ -406,34 +406,58 @@
             const saveData = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             const loadData = () => {
                 const OLD_STORAGE_KEY_V2 = 'productivityHubData_v2';
-                let savedData = localStorage.getItem(STORAGE_KEY); // Try new key first
-                let oldDataFound = false;
-
-                if (!savedData) {
-                    savedData = localStorage.getItem(OLD_STORAGE_KEY_V2); // Fallback to old key
-                    if(savedData) oldDataFound = true;
-                }
-
-                if (savedData) {
-                    const parsedData = JSON.parse(savedData);
-                    // Merge saved data with defaults to ensure new properties are added
-                    data = { ...data, ...parsedData };
-                    
-                    // If loading from an old version, ensure the new 'settings' object exists
-                    if (!data.settings) {
-                        data.settings = {
-                            countdownTitle: "JLPT N4 Exam Countdown",
-                            countdownDate: "2025-12-07",
-                            totalLessons: 50,
-                            totalKanji: 200
+                const oldDataJSON = localStorage.getItem(OLD_STORAGE_KEY_V2);
+                
+                // --- One-time migration from v2 to v3 ---
+                if (oldDataJSON) {
+                    try {
+                        const oldData = JSON.parse(oldDataJSON);
+                        
+                        // Build the new data object based on the old data.
+                        const newData = {
+                            tasks: oldData.tasks || [],
+                            currentLesson: oldData.currentLesson || 1,
+                            kanjiLearned: oldData.kanjiLearned || 0,
+                            studyStreak: oldData.studyStreak || { current: 0, lastUpdate: null },
+                            tasksArchive: oldData.tasksArchive || [],
+                            settings: data.settings // Start with default settings
                         };
+
+                        // Check if there is already v3 data. If so, preserve its settings.
+                        const currentDataJSON = localStorage.getItem(STORAGE_KEY);
+                        if (currentDataJSON) {
+                            const currentData = JSON.parse(currentDataJSON);
+                            if (currentData.settings) {
+                                newData.settings = currentData.settings;
+                            }
+                        }
+
+                        // Save the fully migrated data to the new key and remove the old one.
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+                        localStorage.removeItem(OLD_STORAGE_KEY_V2);
+
+                    } catch (e) {
+                        console.error("Error migrating data:", e);
+                        // If migration fails, remove the old key to prevent loops
+                        localStorage.removeItem(OLD_STORAGE_KEY_V2);
                     }
                 }
-                
-                // If we loaded from the old key, save it under the new key and remove the old one.
-                if (oldDataFound) {
-                    saveData(); // This saves the merged data under the new STORAGE_KEY
-                    localStorage.removeItem(OLD_STORAGE_KEY_V2);
+
+                // --- Regular data loading ---
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    try {
+                        const parsedData = JSON.parse(savedData);
+                        // Deep merge to be safe
+                        data = {
+                            ...data, // Start with defaults
+                            ...parsedData, // Overwrite with saved data
+                            settings: { ...data.settings, ...(parsedData.settings || {}) },
+                            studyStreak: { ...data.studyStreak, ...(parsedData.studyStreak || {}) }
+                        };
+                    } catch (e) {
+                        console.error("Error parsing data:", e);
+                    }
                 }
             };
             
@@ -572,7 +596,7 @@
             const closeModal = (modalEl) => modalEl.classList.add('hidden');
 
             const renderHistory = () => {
-                const allDoneTasks = [...data.tasksArchive, ...data.tasks.filter(t => t.status === 'done')];
+                const allDoneTasks = [...(data.tasksArchive || []), ...data.tasks.filter(t => t.status === 'done')];
                 const uniqueTasks = Array.from(new Map(allDoneTasks.map(task => [task.id, task])).values());
                 const tasksByDay = uniqueTasks.reduce((acc, task) => {
                     if(!task.completedDate) return acc;
