@@ -372,6 +372,7 @@
             const taskForm = document.getElementById('task-form');
             const countdownSettingsForm = document.getElementById('countdown-settings-form');
             const progressSettingsForm = document.getElementById('progress-settings-form');
+            const historyContentEl = document.getElementById('history-content');
 
             const pomodoroTimerEl = document.getElementById('pomodoro-timer');
             const pomoStartPauseBtn = document.getElementById('pomo-start-pause');
@@ -764,29 +765,53 @@
                 Object.entries(taskColumns).forEach(([status, column]) => {
                     if(!column) return;
                     column.addEventListener('dragover', e => { e.preventDefault(); const afterElement = getDragAfterElement(column, e.clientY); const dragging = document.querySelector('.dragging'); if(dragging) { if (afterElement == null) { column.appendChild(dragging); } else { column.insertBefore(dragging, afterElement); } } });
+                    
                     column.addEventListener('drop', e => {
                         e.preventDefault();
-                        const reorderedTasks = []; const statusMap = { 'todo-column': 'todo', 'inprogress-column': 'inprogress', 'done-column': 'done' };
-                        Object.entries(taskColumns).forEach(([statusKey, colEl]) => {
-                            colEl.querySelectorAll('.task').forEach(taskEl => {
+                        const draggedTaskId = e.dataTransfer.getData('taskId');
+                        if (!draggedTaskId) return;
+
+                        const newOrderedTasks = [];
+                        const statusMap = { 'todo-column': 'todo', 'inprogress-column': 'inprogress', 'done-column': 'done' };
+                        
+                        // Rebuild the tasks array based on the final DOM state after the drop.
+                        Object.values(taskColumns).forEach(col => {
+                            const newStatus = statusMap[col.id];
+                            col.querySelectorAll('.task').forEach(taskEl => {
                                 const taskId = taskEl.dataset.id;
-                                const task = data.tasks.find(t => t.id === taskId) || data.tasksArchive.find(t => t.id === taskId);
+                                const task = data.tasks.find(t => t.id === taskId);
                                 if (task) {
-                                    const newStatus = statusMap[colEl.id]; const oldStatus = task.status;
+                                    const oldStatus = task.status;
+                                    // Update status if it changed
                                     if (newStatus !== oldStatus) {
                                         task.status = newStatus;
-                                        if (newStatus === 'done' && oldStatus !== 'done') { task.completedDate = new Date().toISOString(); if (task.type === 'learning') updateStudyStreak(); } 
-                                        else if (newStatus !== 'done' && oldStatus === 'done') { task.completedDate = null; }
+                                        if (newStatus === 'done' && oldStatus !== 'done') {
+                                            task.completedDate = new Date().toISOString();
+                                            if (task.type === 'learning') updateStudyStreak();
+                                        } else if (newStatus !== 'done' && oldStatus === 'done') {
+                                            task.completedDate = null; // Task moved out of 'Done'
+                                        }
                                     }
-                                    reorderedTasks.push(task);
+                                    newOrderedTasks.push(task);
                                 }
                             });
                         });
-                        data.tasksArchive.forEach(archivedTask => { if (!reorderedTasks.find(t => t.id === archivedTask.id)) { reorderedTasks.push(archivedTask); } });
-                        data.tasks = reorderedTasks.filter(t => !data.tasksArchive.find(at => at.id === t.id));
-                        data.tasksArchive = reorderedTasks.filter(t => data.tasksArchive.find(at => at.id === t.id));
-                        archiveOldDoneTasks();
-                        saveData(); renderTasks(); renderWeeklyReview();
+                        
+                        // In case a task was somehow missed (e.g., still in the data array but not in the DOM)
+                        // This ensures we don't lose tasks.
+                         data.tasks.forEach(task => {
+                            if (!newOrderedTasks.find(t => t.id === task.id)) {
+                                newOrderedTasks.push(task);
+                            }
+                        });
+
+
+                        // Replace the old tasks array with the newly ordered and updated one.
+                        data.tasks = newOrderedTasks;
+                        
+                        saveData();
+                        renderTasks(); // Re-render everything from the corrected data model.
+                        renderWeeklyReview();
                     });
                 });
             };
