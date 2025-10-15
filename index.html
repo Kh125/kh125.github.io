@@ -218,7 +218,7 @@
                         <h3 class="text-lg font-semibold mb-3 text-sky-300 flex items-center"><i data-lucide="award" class="icon text-sky-300"></i>Last Week's Wins</h3>
                         <ul id="wins-list" class="list-disc list-inside text-sm text-slate-300 space-y-1 mb-4"><li>Nothing yet.</li></ul>
                         <button id="archive-tasks-btn" class="w-full bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center">
-                            <i data-lucide="archive" class="w-4 h-4 mr-2"></i>Clear Completed Tasks
+                            <i data-lucide="archive" class="w-4 h-4 mr-2"></i>Archive Visible 'Done' Tasks
                         </button>
                     </div>
                 </details>
@@ -338,7 +338,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
-            const STORAGE_KEY = 'productivityHubData_v3'; // Incremented version for new data structure
+            const STORAGE_KEY = 'productivityHubData_v3';
             
             // --- Elements ---
             const countdownEl = document.getElementById('countdown');
@@ -401,15 +401,25 @@
 
             let pomoState = { timerId: null, mode: 'pomodoro', timeRemaining: 1500, isRunning: false, times: { pomodoro: 1500, short: 300, long: 900 } };
             
-            // --- Data Persistence ---
+            // --- Data Persistence & Migration ---
             const saveData = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             const loadData = () => {
-                const savedData = localStorage.getItem(STORAGE_KEY);
+                const OLD_STORAGE_KEY_V2 = 'productivityHubData_v2';
+                let savedData = localStorage.getItem(STORAGE_KEY); // Try new key first
+                let oldDataFound = false;
+
+                if (!savedData) {
+                    savedData = localStorage.getItem(OLD_STORAGE_KEY_V2); // Fallback to old key
+                    if(savedData) oldDataFound = true;
+                }
+
                 if (savedData) {
                     const parsedData = JSON.parse(savedData);
                     // Merge saved data with defaults to ensure new properties are added
                     data = { ...data, ...parsedData };
-                    if (!data.settings) { // Backward compatibility
+                    
+                    // If loading from an old version, ensure the new 'settings' object exists
+                    if (!data.settings) {
                         data.settings = {
                             countdownTitle: "JLPT N4 Exam Countdown",
                             countdownDate: "2025-12-07",
@@ -417,6 +427,12 @@
                             totalKanji: 200
                         };
                     }
+                }
+                
+                // If we loaded from the old key, save it under the new key and remove the old one.
+                if (oldDataFound) {
+                    saveData(); // This saves the merged data under the new STORAGE_KEY
+                    localStorage.removeItem(OLD_STORAGE_KEY_V2);
                 }
             };
             
@@ -436,7 +452,7 @@
             const updateLessonProgressBar = () => {
                 if(!progressBarEl || !lessonCountEl) return;
                 const total = data.settings.totalLessons || 50;
-                const percentage = ((data.currentLesson - 1) / (total -1)) * 100;
+                const percentage = total > 1 ? ((data.currentLesson - 1) / (total - 1)) * 100 : (data.currentLesson >= 1 ? 100 : 0);
                 progressBarEl.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
                 lessonCountEl.textContent = data.currentLesson;
                 lessonTotalEl.textContent = `L${total}`;
@@ -444,7 +460,7 @@
             const updateKanjiProgressBar = () => {
                 if(!kanjiProgressBarEl || !kanjiCountEl) return;
                 const total = data.settings.totalKanji || 200;
-                const percentage = (data.kanjiLearned / total) * 100;
+                const percentage = total > 0 ? (data.kanjiLearned / total) * 100 : 0;
                 kanjiProgressBarEl.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
                 kanjiCountEl.textContent = data.kanjiLearned;
                 kanjiTotalEl.textContent = total;
@@ -742,7 +758,7 @@
                 });
 
                 archiveTasksBtn?.addEventListener('click', handleArchiveTasks);
-                viewHistoryBtn?.addEventListener('click', () => openModal(historyModal));
+                viewHistoryBtn?.addEventListener('click', () => { renderHistory(); openModal(historyModal); });
 
                 // Drag and Drop
                 Object.entries(taskColumns).forEach(([status, column]) => {
