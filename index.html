@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KH</title>
+    <title>kh125's Japanese Study Tools</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Lucide Icons -->
@@ -76,6 +76,18 @@
         details[open] > summary::after {
             content: ' ▲';
         }
+        
+        .card-header-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            color: #6b7280;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .card-header-btn:hover {
+            color: #e5e7eb;
+        }
 
     </style>
 </head>
@@ -91,16 +103,18 @@
             </header>
             
             <!-- Full-width Countdown -->
-            <div class="bg-[#161b22] rounded-xl p-8 ring-1 ring-white/10 text-center mb-8">
-                <h3 class="text-2xl font-medium text-sky-300">JLPT N4 Exam Countdown</h3>
+            <div class="bg-[#161b22] rounded-xl p-8 ring-1 ring-white/10 text-center mb-8 relative">
+                <button id="edit-countdown-btn" class="card-header-btn"><i data-lucide="settings-2" class="w-5 h-5"></i></button>
+                <h3 id="countdown-title" class="text-2xl font-medium text-sky-300">JLPT N4 Exam Countdown</h3>
                 <div id="countdown" class="text-8xl font-bold text-indigo-400 my-4">...</div>
-                <p class="text-md text-slate-400">Until December 7, 2025</p>
+                <p id="countdown-date-text" class="text-md text-slate-400">Until December 7, 2025</p>
             </div>
 
             <!-- N4 Progress & Stats Section -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                  <!-- N4 Progress Card -->
-                <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10">
+                <div class="bg-[#161b22] rounded-xl p-6 ring-1 ring-white/10 relative">
+                    <button id="edit-progress-btn" class="card-header-btn"><i data-lucide="settings-2" class="w-5 h-5"></i></button>
                     <h3 class="text-xl font-semibold mb-4 text-sky-300">🎌 N4 Progress</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Lesson Progress -->
@@ -116,7 +130,7 @@
                                     <span id="lesson-count" class="text-xl font-bold w-12 text-center">0</span>
                                     <button id="lesson-plus" class="progress-control-btn">+</button>
                                 </div>
-                                <span class="text-sm text-slate-400">L50</span>
+                                <span id="lesson-total" class="text-sm text-slate-400">L50</span>
                             </div>
                         </div>
                         <!-- Kanji Progress -->
@@ -132,7 +146,7 @@
                                     <span id="kanji-count" class="text-xl font-bold w-12 text-center">0</span>
                                     <button id="kanji-plus" class="progress-control-btn">+</button>
                                 </div>
-                                <span class="text-sm text-slate-400">30</span>
+                                <span id="kanji-total" class="text-sm text-slate-400">200</span>
                             </div>
                         </div>
                     </div>
@@ -227,6 +241,8 @@
         </footer>
     </div>
 
+    <!-- Modals Container -->
+
     <!-- Task Create/Edit Modal -->
     <div id="task-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
         <div class="bg-[#161b22] w-full max-w-lg rounded-xl ring-1 ring-white/10 flex flex-col">
@@ -259,7 +275,6 @@
         </div>
     </div>
 
-
     <!-- Task History Modal -->
     <div id="history-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
         <div class="bg-[#161b22] w-full max-w-2xl max-h-[90vh] rounded-xl ring-1 ring-white/10 flex flex-col">
@@ -271,14 +286,66 @@
         </div>
     </div>
 
+    <!-- Countdown Settings Modal -->
+    <div id="countdown-settings-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-[#161b22] w-full max-w-lg rounded-xl ring-1 ring-white/10 flex flex-col">
+            <header class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold gradient-text">Countdown Settings</h2>
+                <button id="close-countdown-settings-btn" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+            </header>
+            <form id="countdown-settings-form" class="p-6 space-y-4">
+                <div>
+                    <label for="countdown-title-input" class="block text-sm font-medium text-slate-300 mb-1">Title</label>
+                    <input type="text" id="countdown-title-input" class="w-full bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" required>
+                </div>
+                <div>
+                    <label for="countdown-date-input" class="block text-sm font-medium text-slate-300 mb-1">Due Date</label>
+                    <input type="date" id="countdown-date-input" class="w-full bg-slate-700 rounded-md border-slate-600 p-2 text-slate-400" required>
+                </div>
+                <div class="flex justify-end gap-4 pt-4">
+                    <button type="button" id="cancel-countdown-settings-btn" class="bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Cancel</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Progress Settings Modal -->
+    <div id="progress-settings-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-[#161b22] w-full max-w-lg rounded-xl ring-1 ring-white/10 flex flex-col">
+            <header class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold gradient-text">Progress Goals</h2>
+                <button id="close-progress-settings-btn" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+            </header>
+            <form id="progress-settings-form" class="p-6 space-y-4">
+                <div>
+                    <label for="total-lessons-input" class="block text-sm font-medium text-slate-300 mb-1">Total Lessons</label>
+                    <input type="number" id="total-lessons-input" class="w-full bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" required min="1">
+                </div>
+                <div>
+                    <label for="total-kanji-input" class="block text-sm font-medium text-slate-300 mb-1">Total Kanji</label>
+                    <input type="number" id="total-kanji-input" class="w-full bg-slate-700 rounded-md border-slate-600 p-2 placeholder:text-slate-400" required min="1">
+                </div>
+                <div class="flex justify-end gap-4 pt-4">
+                    <button type="button" id="cancel-progress-settings-btn" class="bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Cancel</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
-            const STORAGE_KEY = 'productivityHubData_v2';
+            const STORAGE_KEY = 'productivityHubData_v3'; // Incremented version for new data structure
             
             // --- Elements ---
             const countdownEl = document.getElementById('countdown');
+            const countdownTitleEl = document.getElementById('countdown-title');
+            const countdownDateTextEl = document.getElementById('countdown-date-text');
+            const editCountdownBtn = document.getElementById('edit-countdown-btn');
+            
             const progressBarEl = document.getElementById('progress-bar');
             const kanjiProgressBarEl = document.getElementById('kanji-progress-bar');
             const lessonCountEl = document.getElementById('lesson-count');
@@ -287,21 +354,24 @@
             const lessonMinusBtn = document.getElementById('lesson-minus');
             const kanjiPlusBtn = document.getElementById('kanji-plus');
             const kanjiMinusBtn = document.getElementById('kanji-minus');
+            const lessonTotalEl = document.getElementById('lesson-total');
+            const kanjiTotalEl = document.getElementById('kanji-total');
+            const editProgressBtn = document.getElementById('edit-progress-btn');
 
-            // Unified Task Board Elements
             const createTaskBtn = document.getElementById('create-task-btn');
             const taskColumns = { todo: document.getElementById('todo-column'), inprogress: document.getElementById('inprogress-column'), done: document.getElementById('done-column') };
             const taskCounters = { todo: document.getElementById('todo-count'), inprogress: document.getElementById('inprogress-count'), done: document.getElementById('done-count') };
             
-            // Task Modal Elements
+            // Modals
             const taskModal = document.getElementById('task-modal');
-            const taskModalTitle = document.getElementById('task-modal-title');
-            const closeTaskModalBtn = document.getElementById('close-task-modal-btn');
-            const cancelTaskBtn = document.getElementById('cancel-task-btn');
+            const historyModal = document.getElementById('history-modal');
+            const countdownSettingsModal = document.getElementById('countdown-settings-modal');
+            const progressSettingsModal = document.getElementById('progress-settings-modal');
+            
+            // Modal Forms & Controls
             const taskForm = document.getElementById('task-form');
-            const taskIdInput = document.getElementById('task-id-input');
-            const taskTextInput = document.getElementById('task-text-input');
-            const taskDateInput = document.getElementById('task-date-input');
+            const countdownSettingsForm = document.getElementById('countdown-settings-form');
+            const progressSettingsForm = document.getElementById('progress-settings-form');
 
             const pomodoroTimerEl = document.getElementById('pomodoro-timer');
             const pomoStartPauseBtn = document.getElementById('pomo-start-pause');
@@ -312,11 +382,7 @@
             
             const winsListEl = document.getElementById('wins-list');
             const archiveTasksBtn = document.getElementById('archive-tasks-btn');
-
-            const historyModal = document.getElementById('history-modal');
             const viewHistoryBtn = document.getElementById('view-history-btn');
-            const closeHistoryBtn = document.getElementById('close-history-btn');
-            const historyContentEl = document.getElementById('history-content');
 
             // --- Data & State ---
             let data = {
@@ -324,7 +390,13 @@
                 currentLesson: 1,
                 kanjiLearned: 0,
                 studyStreak: { current: 0, lastUpdate: null },
-                tasksArchive: []
+                tasksArchive: [],
+                settings: {
+                    countdownTitle: "JLPT N4 Exam Countdown",
+                    countdownDate: "2025-12-07",
+                    totalLessons: 50,
+                    totalKanji: 200
+                }
             };
 
             let pomoState = { timerId: null, mode: 'pomodoro', timeRemaining: 1500, isRunning: false, times: { pomodoro: 1500, short: 300, long: 900 } };
@@ -334,36 +406,50 @@
             const loadData = () => {
                 const savedData = localStorage.getItem(STORAGE_KEY);
                 if (savedData) {
-                    data = JSON.parse(savedData);
-                    if (!data.tasks) data.tasks = [];
-                    if (data.kanjiLearned === undefined) data.kanjiLearned = 0;
-                    if (data.currentLesson === undefined) data.currentLesson = 1;
-                    if (!data.studyStreak) data.studyStreak = { current: 0, lastUpdate: null };
-                    if (!data.tasksArchive) data.tasksArchive = [];
+                    const parsedData = JSON.parse(savedData);
+                    // Merge saved data with defaults to ensure new properties are added
+                    data = { ...data, ...parsedData };
+                    if (!data.settings) { // Backward compatibility
+                        data.settings = {
+                            countdownTitle: "JLPT N4 Exam Countdown",
+                            countdownDate: "2025-12-07",
+                            totalLessons: 50,
+                            totalKanji: 200
+                        };
+                    }
                 }
             };
             
             // --- Core Functions ---
             const getTodayDateString = () => new Date().toISOString().split('T')[0];
-            const calculateCountdown = () => {
+
+            const renderCountdown = () => {
                 if(!countdownEl) return;
-                const examDate = new Date('2025-12-07T00:00:00');
+                const { countdownTitle, countdownDate } = data.settings;
+                countdownTitleEl.textContent = countdownTitle;
+                const examDate = new Date(`${countdownDate}T00:00:00`);
                 const diffDays = Math.ceil((examDate - new Date()) / (1000 * 60 * 60 * 24));
                 countdownEl.textContent = `${diffDays} days`;
+                countdownDateTextEl.textContent = `Until ${examDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
             };
 
             const updateLessonProgressBar = () => {
                 if(!progressBarEl || !lessonCountEl) return;
-                const percentage = ((data.currentLesson - 1) / 49) * 100;
-                progressBarEl.style.width = `${percentage}%`;
+                const total = data.settings.totalLessons || 50;
+                const percentage = ((data.currentLesson - 1) / (total -1)) * 100;
+                progressBarEl.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
                 lessonCountEl.textContent = data.currentLesson;
+                lessonTotalEl.textContent = `L${total}`;
             };
             const updateKanjiProgressBar = () => {
                 if(!kanjiProgressBarEl || !kanjiCountEl) return;
-                const percentage = (data.kanjiLearned / 30) * 100;
-                kanjiProgressBarEl.style.width = `${percentage}%`;
+                const total = data.settings.totalKanji || 200;
+                const percentage = (data.kanjiLearned / total) * 100;
+                kanjiProgressBarEl.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
                 kanjiCountEl.textContent = data.kanjiLearned;
+                kanjiTotalEl.textContent = total;
             };
+            
             const updateStudyStreak = () => {
                 const today = getTodayDateString();
                 if (data.studyStreak.lastUpdate === today) return;
@@ -437,7 +523,6 @@
                 updatePomoDisplay();
             };
             
-            // --- Simplified Weekly Review ---
             const renderWeeklyReview = () => {
                 if(!winsListEl) return;
                 const oneWeekAgo = new Date();
@@ -464,10 +549,11 @@
                 renderTasks();
                 renderWeeklyReview();
             };
+            
+            // --- Modal Open/Close ---
+            const openModal = (modalEl) => modalEl.classList.remove('hidden');
+            const closeModal = (modalEl) => modalEl.classList.add('hidden');
 
-            // --- Task History Modal ---
-            const openHistoryModal = () => { renderHistory(); historyModal.classList.remove('hidden'); };
-            const closeHistoryModal = () => { historyModal.classList.add('hidden'); };
             const renderHistory = () => {
                 const allDoneTasks = [...data.tasksArchive, ...data.tasks.filter(t => t.status === 'done')];
                 const uniqueTasks = Array.from(new Map(allDoneTasks.map(task => [task.id, task])).values());
@@ -495,59 +581,30 @@
                     return `<details class="bg-slate-800/50 p-3 rounded-lg" open><summary class="font-semibold text-lg text-slate-200">${formattedDate}</summary><ul class="mt-2 pl-4 space-y-1 list-disc list-inside">${tasksHtml}</ul></details>`;
                 }).join('');
             };
-            
-            // --- Task Modal ---
-            const openTaskModal = (taskId = null) => {
-                taskForm.reset();
-                if (taskId) {
-                    const task = data.tasks.find(t => t.id === taskId);
-                    if (task) {
-                        taskModalTitle.textContent = 'Edit Task';
-                        taskIdInput.value = task.id;
-                        taskTextInput.value = task.text;
-                        taskDateInput.value = task.dueDate || '';
-                        taskForm.querySelector(`input[name="modal-task-type"][value="${task.type}"]`).checked = true;
-                    }
-                } else {
-                    taskModalTitle.textContent = 'Add Task';
-                    taskIdInput.value = '';
-                }
-                taskModal.classList.remove('hidden');
-            };
-            const closeTaskModal = () => taskModal.classList.add('hidden');
+
             const handleTaskFormSubmit = (e) => {
                 e.preventDefault();
-                const id = taskIdInput.value;
-                const text = taskTextInput.value.trim();
+                const id = document.getElementById('task-id-input').value;
+                const text = document.getElementById('task-text-input').value.trim();
                 const type = taskForm.querySelector('input[name="modal-task-type"]:checked').value;
-                const dueDate = taskDateInput.value;
+                const dueDate = document.getElementById('task-date-input').value;
 
                 if (!text) return;
 
-                if (id) { // Editing existing task
+                if (id) { // Editing
                     const task = data.tasks.find(t => t.id === id);
-                    if (task) {
-                        task.text = text;
-                        task.type = type;
-                        task.dueDate = dueDate || null;
-                    }
-                } else { // Creating new task
+                    if (task) { task.text = text; task.type = type; task.dueDate = dueDate || null; }
+                } else { // Creating
                     data.tasks.push({ id: `task-${Date.now()}`, text, status: 'todo', type, priority: false, dueDate: dueDate || null });
                 }
                 saveData();
                 renderTasks();
-                closeTaskModal();
+                closeModal(taskModal);
             };
-            
-            // --- Auto-archiving logic ---
+
             const archiveOldDoneTasks = () => {
                 const todayStr = getTodayDateString();
-                const tasksToArchive = data.tasks.filter(task => 
-                    task.status === 'done' && 
-                    task.completedDate && 
-                    task.completedDate.split('T')[0] < todayStr
-                );
-                
+                const tasksToArchive = data.tasks.filter(task => task.status === 'done' && task.completedDate && task.completedDate.split('T')[0] < todayStr);
                 if (tasksToArchive.length > 0) {
                     data.tasksArchive.push(...tasksToArchive);
                     data.tasks = data.tasks.filter(task => !tasksToArchive.find(t => t.id === task.id));
@@ -555,8 +612,6 @@
                 }
             };
 
-
-            // --- Unified Task Board Logic ---
             const createTaskElement = (task) => {
                 const taskEl = document.createElement('div');
                 const isDone = task.status === 'done';
@@ -570,42 +625,28 @@
                 
                 let dueDateHtml = '';
                 if (task.dueDate) {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
+                    const today = new Date(); today.setHours(0, 0, 0, 0);
                     const dueDate = new Date(task.dueDate);
                     const isOverdue = dueDate < today && task.status !== 'done';
                     const formattedDate = dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    dueDateHtml = `
-                        <div class="text-xs mt-2 flex items-center ${isOverdue ? 'text-red-400' : 'text-slate-400'}">
-                            <i data-lucide="calendar" class="w-3 h-3 mr-1"></i>
-                            <span>${formattedDate}</span>
-                        </div>
-                    `;
+                    dueDateHtml = `<div class="text-xs mt-2 flex items-center ${isOverdue ? 'text-red-400' : 'text-slate-400'}"><i data-lucide="calendar" class="w-3 h-3 mr-1"></i><span>${formattedDate}</span></div>`;
                 }
 
-                taskEl.innerHTML = `
-                    <div class="flex-grow">
-                        <div class="flex items-center">
-                            ${typeBadge}
-                            <p class="ml-3 flex-1">${task.text}</p>
-                        </div>
-                        ${dueDateHtml}
-                    </div>
-                    <div class="task-actions flex-shrink-0 flex items-center ml-2">
-                        <button class="priority-btn text-slate-400 hover:text-amber-400 p-1">${task.priority ? '★' : '☆'}</button>
-                        <button class="edit-btn text-slate-400 hover:text-sky-400 p-1"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button class="delete-btn text-slate-400 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                `;
+                taskEl.innerHTML = `<div class="flex-grow"><div class="flex items-center">${typeBadge}<p class="ml-3 flex-1">${task.text}</p></div>${dueDateHtml}</div><div class="task-actions flex-shrink-0 flex items-center ml-2"><button class="priority-btn text-slate-400 hover:text-amber-400 p-1">${task.priority ? '★' : '☆'}</button><button class="edit-btn text-slate-400 hover:text-sky-400 p-1"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button class="delete-btn text-slate-400 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
                 
                 taskEl.querySelector('.delete-btn').onclick = () => { data.tasks = data.tasks.filter(t => t.id !== task.id); saveData(); renderTasks(); };
-                taskEl.querySelector('.priority-btn').onclick = () => { 
-                    const targetTask = data.tasks.find(t => t.id === task.id);
-                    if(targetTask) targetTask.priority = !targetTask.priority; 
-                    saveData(); 
-                    renderTasks(); 
+                taskEl.querySelector('.priority-btn').onclick = () => { const targetTask = data.tasks.find(t => t.id === task.id); if(targetTask) targetTask.priority = !targetTask.priority; saveData(); renderTasks(); };
+                taskEl.querySelector('.edit-btn').onclick = () => {
+                    const taskToEdit = data.tasks.find(t => t.id === task.id);
+                    if(taskToEdit){
+                        document.getElementById('task-modal-title').textContent = 'Edit Task';
+                        document.getElementById('task-id-input').value = taskToEdit.id;
+                        document.getElementById('task-text-input').value = taskToEdit.text;
+                        document.getElementById('task-date-input').value = taskToEdit.dueDate || '';
+                        taskForm.querySelector(`input[name="modal-task-type"][value="${taskToEdit.type}"]`).checked = true;
+                        openModal(taskModal);
+                    }
                 };
-                taskEl.querySelector('.edit-btn').onclick = () => openTaskModal(task.id);
                 
                 taskEl.addEventListener('dragstart', (e) => { e.target.classList.add('dragging'); e.dataTransfer.setData('taskId', task.id); });
                 taskEl.addEventListener('dragend', (e) => e.target.classList.remove('dragging'));
@@ -614,10 +655,7 @@
 
             const renderTasks = () => {
                 Object.values(taskColumns).forEach(col => col.innerHTML = '');
-                data.tasks.forEach(task => {
-                    const taskEl = createTaskElement(task);
-                    taskColumns[task.status]?.appendChild(taskEl);
-                });
+                data.tasks.forEach(task => taskColumns[task.status]?.appendChild(createTaskElement(task)));
                 updateTaskCounts();
                 if (typeof lucide !== 'undefined') { lucide.createIcons(); }
             };
@@ -632,20 +670,17 @@
             const getDragAfterElement = (container, y) => {
                 const draggableElements = [...container.querySelectorAll('.task:not(.dragging)')];
                 return draggableElements.reduce((closest, child) => {
-                    const box = child.getBoundingClientRect();
-                    const offset = y - box.top - box.height / 2;
-                    if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } 
-                    else { return closest; }
+                    const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; }
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
             };
 
             const initDashboard = () => {
                 loadData();
-                archiveOldDoneTasks(); // Run the new cleanup logic on load
-                calculateCountdown();
-                setInterval(calculateCountdown, 1000 * 60 * 60);
+                archiveOldDoneTasks();
+                renderCountdown();
+                setInterval(renderCountdown, 1000 * 60 * 60);
                 
-                // Render all components
                 updateLessonProgressBar();
                 updateKanjiProgressBar();
                 renderStudyStreak();
@@ -654,82 +689,88 @@
                 renderTasks();
                 
                 // --- Event Listeners ---
-                lessonPlusBtn?.addEventListener('click', () => { if (data.currentLesson < 50) data.currentLesson++; updateLessonProgressBar(); saveData(); });
+                lessonPlusBtn?.addEventListener('click', () => { if (data.currentLesson < data.settings.totalLessons) data.currentLesson++; updateLessonProgressBar(); saveData(); });
                 lessonMinusBtn?.addEventListener('click', () => { if (data.currentLesson > 1) data.currentLesson--; updateLessonProgressBar(); saveData(); });
-                kanjiPlusBtn?.addEventListener('click', () => { if (data.kanjiLearned < 200) data.kanjiLearned++; updateKanjiProgressBar(); saveData(); });
+                kanjiPlusBtn?.addEventListener('click', () => { if (data.kanjiLearned < data.settings.totalKanji) data.kanjiLearned++; updateKanjiProgressBar(); saveData(); });
                 kanjiMinusBtn?.addEventListener('click', () => { if (data.kanjiLearned > 0) data.kanjiLearned--; updateKanjiProgressBar(); saveData(); });
 
                 pomoStartPauseBtn?.addEventListener('click', () => pomoState.isRunning ? pausePomoTimer() : startPomoTimer());
                 pomoResetBtn?.addEventListener('click', () => switchPomoMode(pomoState.mode));
-                Object.values(pomoModeButtons).forEach((btn, index) => {
-                    const mode = Object.keys(pomoModeButtons)[index];
-                    btn?.addEventListener('click', () => switchPomoMode(mode));
-                });
+                Object.entries(pomoModeButtons).forEach(([mode, btn]) => btn?.addEventListener('click', () => switchPomoMode(mode)));
                 
-                // Task Modal Listeners
-                createTaskBtn?.addEventListener('click', () => openTaskModal());
-                closeTaskModalBtn?.addEventListener('click', closeTaskModal);
-                cancelTaskBtn?.addEventListener('click', closeTaskModal);
-                taskModal?.addEventListener('click', (e) => { if (e.target === taskModal) closeTaskModal(); });
+                // Generic Modal Setup
+                document.querySelectorAll('[id^="close-"], [id^="cancel-"]').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.fixed'))));
+                document.querySelectorAll('.fixed').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); }));
+
+                // Task Modal
+                createTaskBtn?.addEventListener('click', () => { 
+                    taskForm.reset(); 
+                    document.getElementById('task-modal-title').textContent = 'Add Task';
+                    document.getElementById('task-id-input').value = '';
+                    openModal(taskModal); 
+                });
                 taskForm?.addEventListener('submit', handleTaskFormSubmit);
 
+                // Settings Modals
+                editCountdownBtn?.addEventListener('click', () => {
+                    document.getElementById('countdown-title-input').value = data.settings.countdownTitle;
+                    document.getElementById('countdown-date-input').value = data.settings.countdownDate;
+                    openModal(countdownSettingsModal);
+                });
+                countdownSettingsForm?.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    data.settings.countdownTitle = document.getElementById('countdown-title-input').value;
+                    data.settings.countdownDate = document.getElementById('countdown-date-input').value;
+                    saveData();
+                    renderCountdown();
+                    closeModal(countdownSettingsModal);
+                });
+
+                editProgressBtn?.addEventListener('click', () => {
+                    document.getElementById('total-lessons-input').value = data.settings.totalLessons;
+                    document.getElementById('total-kanji-input').value = data.settings.totalKanji;
+                    openModal(progressSettingsModal);
+                });
+                progressSettingsForm?.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    data.settings.totalLessons = parseInt(document.getElementById('total-lessons-input').value) || 50;
+                    data.settings.totalKanji = parseInt(document.getElementById('total-kanji-input').value) || 200;
+                    saveData();
+                    updateLessonProgressBar();
+                    updateKanjiProgressBar();
+                    closeModal(progressSettingsModal);
+                });
 
                 archiveTasksBtn?.addEventListener('click', handleArchiveTasks);
-                viewHistoryBtn?.addEventListener('click', openHistoryModal);
-                closeHistoryBtn?.addEventListener('click', closeHistoryModal);
-                historyModal?.addEventListener('click', (e) => { if (e.target === historyModal) closeHistoryModal(); });
+                viewHistoryBtn?.addEventListener('click', () => openModal(historyModal));
 
-                // Setup Drag and Drop for the unified board
+                // Drag and Drop
                 Object.entries(taskColumns).forEach(([status, column]) => {
                     if(!column) return;
                     column.addEventListener('dragover', e => { e.preventDefault(); const afterElement = getDragAfterElement(column, e.clientY); const dragging = document.querySelector('.dragging'); if(dragging) { if (afterElement == null) { column.appendChild(dragging); } else { column.insertBefore(dragging, afterElement); } } });
-                    
                     column.addEventListener('drop', e => {
                         e.preventDefault();
-                        const reorderedTasks = [];
-                        const statusMap = {
-                            'todo-column': 'todo',
-                            'inprogress-column': 'inprogress',
-                            'done-column': 'done'
-                        };
-
+                        const reorderedTasks = []; const statusMap = { 'todo-column': 'todo', 'inprogress-column': 'inprogress', 'done-column': 'done' };
                         Object.entries(taskColumns).forEach(([statusKey, colEl]) => {
-                            const tasksInColumn = colEl.querySelectorAll('.task');
-                            tasksInColumn.forEach(taskEl => {
+                            colEl.querySelectorAll('.task').forEach(taskEl => {
                                 const taskId = taskEl.dataset.id;
                                 const task = data.tasks.find(t => t.id === taskId) || data.tasksArchive.find(t => t.id === taskId);
                                 if (task) {
-                                    const newStatus = statusMap[colEl.id];
-                                    const oldStatus = task.status;
-
+                                    const newStatus = statusMap[colEl.id]; const oldStatus = task.status;
                                     if (newStatus !== oldStatus) {
                                         task.status = newStatus;
-                                        if (newStatus === 'done' && oldStatus !== 'done') {
-                                            task.completedDate = new Date().toISOString();
-                                            if (task.type === 'learning') updateStudyStreak();
-                                        } else if (newStatus !== 'done' && oldStatus === 'done') {
-                                            task.completedDate = null; 
-                                        }
+                                        if (newStatus === 'done' && oldStatus !== 'done') { task.completedDate = new Date().toISOString(); if (task.type === 'learning') updateStudyStreak(); } 
+                                        else if (newStatus !== 'done' && oldStatus === 'done') { task.completedDate = null; }
                                     }
                                     reorderedTasks.push(task);
                                 }
                             });
                         });
-                        
-                        // Also include tasks that might be in the archive but were somehow dragged back
-                        data.tasksArchive.forEach(archivedTask => {
-                            if (!reorderedTasks.find(t => t.id === archivedTask.id)) {
-                                reorderedTasks.push(archivedTask);
-                            }
-                        });
-
-
-                        data.tasks = reorderedTasks.filter(t => t.status !== 'done' || (t.status === 'done' && t.completedDate.split('T')[0] === getTodayDateString()));
-                        data.tasksArchive = reorderedTasks.filter(t => t.status === 'done' && t.completedDate.split('T')[0] !== getTodayDateString());
-
-                        saveData();
-                        renderTasks(); 
-                        renderWeeklyReview();
+                        data.tasksArchive.forEach(archivedTask => { if (!reorderedTasks.find(t => t.id === archivedTask.id)) { reorderedTasks.push(archivedTask); } });
+                        data.tasks = reorderedTasks.filter(t => !data.tasksArchive.find(at => at.id === t.id));
+                        data.tasksArchive = reorderedTasks.filter(t => data.tasksArchive.find(at => at.id === t.id));
+                        archiveOldDoneTasks();
+                        saveData(); renderTasks(); renderWeeklyReview();
                     });
                 });
             };
